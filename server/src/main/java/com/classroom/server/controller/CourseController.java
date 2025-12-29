@@ -1,5 +1,6 @@
 package com.classroom.server.controller;
 
+import com.classroom.server.dto.course.CourseResponse;
 import com.classroom.server.dto.course.CreateCourseRequest;
 import com.classroom.server.dto.course.JoinCourseRequest;
 import com.classroom.server.entity.Course;
@@ -44,9 +45,7 @@ public class CourseController {
     }
 
     @GetMapping
-    public List<Course> getAllCourses(
-            @RequestParam Long userId
-    ) {
+    public List<CourseResponse> getAllCourses(@RequestParam Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -54,21 +53,19 @@ public class CourseController {
     }
 
     @GetMapping("/teacher")
-    public List<Course> getTeacherCourses(
-            @RequestParam Long userId
-    ) {
+    public List<CourseResponse> getTeacherCourses(@RequestParam Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return courseService.getCoursesWhereUserIsTeacher(user);
     }
+
     @GetMapping("/student")
-    public List<Course> getStudentCourses(
-            @RequestParam Long userId
-    ) {
+    public List<CourseResponse> getStudentCourses(@RequestParam Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return courseService.getCoursesWhereUserIsStudent(user);
     }
+
 }

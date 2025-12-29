@@ -37,11 +37,13 @@ async function apiFetch(
   }
 
   // For file streams (PDFs, downloads)
-  if (response.headers.get("Content-Type")?.includes("application")) {
-    return response;
+  const contentType = response.headers.get("Content-Type") || "";
+
+  if (contentType.includes("application/json")) {
+    return response.json();
   }
 
-  return response.json();
+  return response;
 }
 
 export default apiFetch;

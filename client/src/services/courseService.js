@@ -9,9 +9,10 @@ export function createCourse(data) {
 }
 
 // Join a course (student)
-export function joinCourse(courseId) {
+export function joinCourse(courseId, userId) {
   return apiFetch(`/courses/${courseId}/join`, {
     method: "POST",
+    body: { userId },
   });
 }
 

@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
     method: "POST",
     body: { email, password },
   });
-
+  console.log("login response:", data);
   setUser(data);
   localStorage.setItem("user", JSON.stringify(data));
   return data;

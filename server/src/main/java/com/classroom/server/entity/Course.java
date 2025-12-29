@@ -1,5 +1,6 @@
 package com.classroom.server.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,7 +21,7 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 

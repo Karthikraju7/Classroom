@@ -1,5 +1,4 @@
 package com.classroom.server.entity;
-
 import jakarta.persistence.*;
 import lombok.Data;
 

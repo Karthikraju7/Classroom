@@ -1,5 +1,6 @@
 package com.classroom.server.service;
 
+import com.classroom.server.dto.course.CourseResponse;
 import com.classroom.server.entity.*;
 import com.classroom.server.repository.CourseMemberRepository;
 import com.classroom.server.repository.CourseRepository;
@@ -59,26 +60,51 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<Course> getAllCoursesForUser(User user) {
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getAllCoursesForUser(User user) {
         return courseMemberRepository.findByUser(user)
                 .stream()
-                .map(CourseMember::getCourse)
-                .collect(Collectors.toList());
+                .map(cm -> {
+                    Course c = cm.getCourse();
+                    return new CourseResponse(
+                            c.getId(),
+                            c.getName(),
+                            c.getDescription()
+                    );
+                })
+                .toList();
     }
 
     @Override
-    public List<Course> getCoursesWhereUserIsTeacher(User user) {
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getCoursesWhereUserIsTeacher(User user) {
         return courseMemberRepository.findByUserAndRole(user, CourseRole.TEACHER)
                 .stream()
-                .map(CourseMember::getCourse)
-                .collect(Collectors.toList());
+                .map(cm -> {
+                    Course c = cm.getCourse();
+                    return new CourseResponse(
+                            c.getId(),
+                            c.getName(),
+                            c.getDescription()
+                    );
+                })
+                .toList();
     }
 
     @Override
-    public List<Course> getCoursesWhereUserIsStudent(User user) {
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getCoursesWhereUserIsStudent(User user) {
         return courseMemberRepository.findByUserAndRole(user, CourseRole.STUDENT)
                 .stream()
-                .map(CourseMember::getCourse)
-                .collect(Collectors.toList());
+                .map(cm -> {
+                    Course c = cm.getCourse();
+                    return new CourseResponse(
+                            c.getId(),
+                            c.getName(),
+                            c.getDescription()
+                    );
+                })
+                .toList();
     }
+
 }

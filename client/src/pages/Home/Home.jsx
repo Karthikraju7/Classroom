@@ -22,24 +22,26 @@ function Home() {
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
-  const { logout } = useAuth();
-  const { authUser } = useAuth();
+  const { user, logout } = useAuth();
 
+  console.log("user:", user);
   useEffect(() => {
-    loadCourses();
-  }, [filter]);
+    if (user?.id) {
+      loadCourses();
+    }
+  }, [filter, user]);
 
   async function loadCourses() {
     setLoading(true);
     try {
+      if (!user?.id) return;
       let data;
-      if (!authUser?.id) return;
       if (filter === FILTERS.TEACHER) {
-        data = await getTeacherCourses(authUser.id);
+        data = await getTeacherCourses(user.id);
       } else if (filter === FILTERS.STUDENT) {
-        data = await getStudentCourses(authUser.id);
+        data = await getStudentCourses(user.id);
       } else {
-        data = await getAllCourses(authUser.id);
+        data = await getAllCourses(user.id);
       }
       setCourses(data);
     } catch (err) {
@@ -78,19 +80,19 @@ function Home() {
       <div className="flex gap-4 border-b pb-2">
         <button
           onClick={() => setFilter(FILTERS.ALL)}
-          className={filter === FILTERS.ALL ? "font-medium border-b-2 border-blue-600" : "text-gray-600"}
+          className={filter === FILTERS.ALL ? "font-medium border-b-2 border-blue-600" : "text-gray-600 cursor-pointer"}
         >
           All
         </button>
         <button
           onClick={() => setFilter(FILTERS.TEACHER)}
-          className={filter === FILTERS.TEACHER ? "font-medium border-b-2 border-blue-600" : "text-gray-600"}
+          className={filter === FILTERS.TEACHER ? "font-medium border-b-2 border-blue-600" : "text-gray-600 cursor-pointer"}
         >
           Teaching
         </button>
         <button
           onClick={() => setFilter(FILTERS.STUDENT)}
-          className={filter === FILTERS.STUDENT ? "font-medium border-b-2 border-blue-600" : "text-gray-600"}
+          className={filter === FILTERS.STUDENT ? "font-medium border-b-2 border-blue-600" : "text-gray-600 cursor-pointer"}
         >
           Studying
         </button>

@@ -1,5 +1,6 @@
 package com.classroom.server.service;
 
+import com.classroom.server.dto.course.CourseResponse;
 import com.classroom.server.entity.Course;
 import com.classroom.server.entity.User;
 
@@ -11,9 +12,9 @@ public interface CourseService {
 
     void joinCourse(Long courseId, User user);
 
-    List<Course> getAllCoursesForUser(User user);
+    List<CourseResponse> getAllCoursesForUser(User user);
 
-    List<Course> getCoursesWhereUserIsTeacher(User user);
+    List<CourseResponse> getCoursesWhereUserIsTeacher(User user);
 
-    List<Course> getCoursesWhereUserIsStudent(User user);
+    List<CourseResponse> getCoursesWhereUserIsStudent(User user);
 }
