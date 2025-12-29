@@ -1,0 +1,49 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "../pages/Home/Home";
+import CourseLayout from "../pages/Course/CourseLayout";
+import Auth from "../pages/Auth/Auth";
+import { useAuth } from "../context/AuthContext";
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Auth */}
+      <Route path="/login" element={<Auth />} />
+
+      {/* Protected Home */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Course context */}
+      <Route
+        path="/courses/:courseId/*"
+        element={
+          <ProtectedRoute>
+            <CourseLayout />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default AppRoutes;
