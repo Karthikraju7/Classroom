@@ -2,6 +2,7 @@ import { useParams, NavLink, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { CourseProvider, useCourse } from "../../context/CourseContext";
 import { getCourseById } from "../../services/courseService";
+import { useAuth } from "../../context/AuthContext";
 
 import Announcements from "./Announcements";
 import Attachments from "./Attachments";
@@ -13,11 +14,12 @@ import AssignmentDetail from "./AssignmentDetail";
 function CourseLayoutInner() {
   const { courseId } = useParams();
   const { setActiveCourse, setRole, activeCourse } = useCourse();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function loadCourse() {
       try {
-        const data = await getCourseById(courseId);
+        const data = await getCourseById(courseId, user.id);
         setActiveCourse(data);
         setRole(data.role);
       } catch (err) {
@@ -25,8 +27,11 @@ function CourseLayoutInner() {
       }
     }
 
-    loadCourse();
-  }, [courseId]);
+    if (user && courseId) {
+      loadCourse();
+    }
+  }, [courseId, user]);
+
 
   if (!activeCourse) {
     return <div className="p-6">Loading course...</div>;
@@ -47,11 +52,11 @@ function CourseLayoutInner() {
         {/* SIDEBAR */}
         <aside className="w-64 border-r p-4 bg-gray-50">
           <nav className="flex flex-col gap-3">
-            <NavLink to="announcements">Announcements</NavLink>
-            <NavLink to="attachments">Attachments</NavLink>
-            <NavLink to="assignments">Assignments</NavLink>
-            <NavLink to="people">People</NavLink>
-            <NavLink to="messages">Messages</NavLink>
+            <NavLink to={`/courses/${courseId}/announcements`}>Announcements</NavLink>
+            <NavLink to={`/courses/${courseId}/attachments`}>Attachments</NavLink>
+            <NavLink to={`/courses/${courseId}/assignments`}>Assignments</NavLink>
+            <NavLink to={`/courses/${courseId}/people`}>People</NavLink>
+            <NavLink to={`/courses/${courseId}/messages`}>Messages</NavLink>
           </nav>
         </aside>
 

@@ -61,6 +61,30 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
+    public CourseResponse getCourseByIdForUser(Long courseId, User user) {
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found")
+                );
+
+        CourseMember member = courseMemberRepository
+                .findByCourseAndUser(course, user)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.FORBIDDEN, "User not enrolled in course")
+                );
+
+        return new CourseResponse(
+                course.getId(),
+                course.getName(),
+                course.getDescription(),
+                member.getRole().name()
+        );
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
     public List<CourseResponse> getAllCoursesForUser(User user) {
         return courseMemberRepository.findByUser(user)
                 .stream()
@@ -69,7 +93,8 @@ public class CourseServiceImpl implements CourseService {
                     return new CourseResponse(
                             c.getId(),
                             c.getName(),
-                            c.getDescription()
+                            c.getDescription(),
+                            cm.getRole().name()
                     );
                 })
                 .toList();
@@ -85,7 +110,8 @@ public class CourseServiceImpl implements CourseService {
                     return new CourseResponse(
                             c.getId(),
                             c.getName(),
-                            c.getDescription()
+                            c.getDescription(),
+                            CourseRole.TEACHER.name()
                     );
                 })
                 .toList();
@@ -101,7 +127,8 @@ public class CourseServiceImpl implements CourseService {
                     return new CourseResponse(
                             c.getId(),
                             c.getName(),
-                            c.getDescription()
+                            c.getDescription(),
+                            CourseRole.STUDENT.name()
                     );
                 })
                 .toList();

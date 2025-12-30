@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getAnnouncementsByCourse } from "../../services/announcementService";
+import { getAttachmentsByAnnouncement } from "../../services/attachmentService";
 import AttachmentItem from "../../components/attachment/AttachmentItem";
 
 function Attachments() {
   const { courseId } = useParams();
-
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -18,12 +18,13 @@ function Attachments() {
     try {
       const announcements = await getAnnouncementsByCourse(courseId);
 
-      // 🔑 Attachments are derived from announcements
-      const allAttachments = announcements
-        .filter(a => a.attachments && a.attachments.length > 0)
-        .flatMap(a => a.attachments);
+      const attachmentLists = await Promise.all(
+        announcements.map(a =>
+          getAttachmentsByAnnouncement(a.id)
+        )
+      );
 
-      setAttachments(allAttachments);
+      setAttachments(attachmentLists.flat());
     } catch (err) {
       console.error("Failed to load attachments", err);
     } finally {

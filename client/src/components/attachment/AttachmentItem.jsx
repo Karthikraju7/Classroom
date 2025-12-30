@@ -1,7 +1,11 @@
+import { useAuth } from "../../context/AuthContext";
+
 function AttachmentItem({ attachment }) {
+  const { user } = useAuth();
+
   function handleOpen() {
     window.open(
-      `http://localhost:8080/attachments/${attachment.id}/view`,
+      `http://localhost:8080/attachments/${attachment.id}/view?userId=${user.id}`,
       "_blank"
     );
   }

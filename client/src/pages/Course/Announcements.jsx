@@ -7,6 +7,7 @@ import {
 } from "../../services/announcementService";
 import AnnouncementCard from "../../components/announcement/AnnouncementCard";
 import AnnouncementForm from "../../components/announcement/AnnouncementForm";
+import { useAuth } from "../../context/AuthContext";
 
 function Announcements() {
   const { courseId } = useParams();
@@ -15,6 +16,7 @@ function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     loadAnnouncements();
@@ -32,18 +34,16 @@ function Announcements() {
     }
   }
 
-  async function handleCreate(data) {
-    try {
-      await createAnnouncement({
-        ...data,
-        courseId,
-      });
-      setShowForm(false);
-      loadAnnouncements();
-    } catch (err) {
-      console.error("Failed to create announcement", err);
-    }
+  async function handleCreate(formData) {
+  try {
+    await createAnnouncement(formData);
+    setShowForm(false);
+    loadAnnouncements();
+  } catch (err) {
+    console.error("Failed to create announcement", err);
   }
+}
+
 
   return (
     <div className="space-y-4">
@@ -66,6 +66,8 @@ function Announcements() {
         <AnnouncementForm
           onSubmit={handleCreate}
           onCancel={() => setShowForm(false)}
+          courseId={courseId}
+          userId={user.id}   
         />
       )}
 

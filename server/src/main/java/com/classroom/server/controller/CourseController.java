@@ -44,6 +44,18 @@ public class CourseController {
         courseService.joinCourse(courseId, user);
     }
 
+    @GetMapping("/{courseId}")
+    public CourseResponse getCourseById(
+            @PathVariable Long courseId,
+            @RequestParam Long userId
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return courseService.getCourseByIdForUser(courseId, user);
+    }
+
+
     @GetMapping
     public List<CourseResponse> getAllCourses(@RequestParam Long userId) {
         User user = userRepository.findById(userId)

@@ -16,10 +16,12 @@ export function joinCourse(courseId, userId) {
   });
 }
 
-export function getCourseById(courseId) {
-  return apiFetch(`/courses/${courseId}`);
+// Get single course with role
+export function getCourseById(courseId, userId) {
+  return apiFetch(`/courses/${courseId}?userId=${userId}`);
 }
 
+// Home page APIs
 export const getAllCourses = (userId) =>
   apiFetch(`/courses?userId=${userId}`);
 
