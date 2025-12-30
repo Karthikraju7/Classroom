@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
@@ -18,20 +19,27 @@ public class LocalFileStorageService implements FileStorageService {
     private String rootDir;
 
     @Override
-    public String save(MultipartFile file, Long courseId, Long announcementId) {
+    public String save(MultipartFile file, Long announcementId) {
         try {
-            String dirPath = rootDir
-                    + "/courses/course-" + courseId
-                    + "/ann-" + announcementId;
+            // storage/announcements/{announcementId}/
+            Path dirPath = Path.of(
+                    rootDir,
+                    "announcements",
+                    announcementId.toString()
+            );
 
-            Files.createDirectories(Path.of(dirPath));
+            Files.createDirectories(dirPath);
 
             String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
-            Path filePath = Path.of(dirPath, fileName);
+            Path filePath = dirPath.resolve(fileName);
 
-            Files.copy(file.getInputStream(), filePath);
+            Files.copy(
+                    file.getInputStream(),
+                    filePath,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
 
-            return filePath.toString(); // saved in DB as storagePath
+            return filePath.toString(); // stored in DB
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
@@ -39,6 +47,12 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public Resource load(String storagePath) {
-        return new FileSystemResource(storagePath);
+        Path path = Path.of(storagePath);
+
+        if (!Files.exists(path)) {
+            throw new RuntimeException("File not found on disk");
+        }
+
+        return new FileSystemResource(path);
     }
 }

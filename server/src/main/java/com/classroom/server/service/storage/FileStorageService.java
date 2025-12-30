@@ -4,6 +4,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface FileStorageService {
-    String save(MultipartFile file, Long courseId, Long announcementId);
+
+    String save(MultipartFile file, Long announcementId);
+
     Resource load(String storagePath);
 }

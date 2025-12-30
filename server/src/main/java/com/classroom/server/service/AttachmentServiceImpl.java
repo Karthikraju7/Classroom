@@ -18,57 +18,64 @@ import java.util.List;
 public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
-    private final CourseMemberRepository courseMemberRepository;
     private final FileStorageService fileStorageService;
+    private final CourseMemberRepository courseMemberRepository;
 
+    /**
+     * Called ONLY from AnnouncementService after announcement is created
+     */
     @Override
-    public Attachment uploadAttachment(
+    public void saveAttachments(
             Announcement announcement,
-            MultipartFile file,
-            User uploader
+            List<MultipartFile> files
     ) {
+        for (MultipartFile file : files) {
 
-        // 🔒 Only TEACHER can upload
-        CourseMember member = courseMemberRepository
-                .findByCourseAndUser(announcement.getCourse(), uploader)
-                .orElseThrow(() -> new RuntimeException("User not part of course"));
+            String storagePath = fileStorageService.save(
+                    file,
+                    announcement.getId() // ONLY announcement ID
+            );
 
-        if (member.getRole() != CourseRole.TEACHER) {
-            throw new RuntimeException("Only teachers can upload attachments");
+            Attachment attachment = new Attachment();
+            attachment.setAnnouncement(announcement);
+            attachment.setFileName(file.getOriginalFilename());
+            attachment.setFileType(file.getContentType());
+            attachment.setFileSize(file.getSize());
+            attachment.setStoragePath(storagePath);
+
+            attachmentRepository.save(attachment);
         }
-
-        String storagePath = fileStorageService.save(
-                file,
-                announcement.getCourse().getId(),
-                announcement.getId()
-        );
-
-        Attachment attachment = new Attachment();
-        attachment.setAnnouncement(announcement);
-        attachment.setFileName(file.getOriginalFilename());
-        attachment.setFileType(file.getContentType());
-        attachment.setFileSize(file.getSize());
-        attachment.setStoragePath(storagePath);
-
-        return attachmentRepository.save(attachment);
     }
 
     @Override
-    public Resource loadAttachment(Long attachmentId, User requester) {
-
+    public Attachment getAttachment(Long attachmentId, User requester) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new RuntimeException("Attachment not found"));
 
-        // 🔒 Must be course member to view
         courseMemberRepository.findByCourseAndUser(
                 attachment.getAnnouncement().getCourse(),
                 requester
         ).orElseThrow(() -> new RuntimeException("Access denied"));
 
+        return attachment;
+    }
+
+
+    /**
+     * Streams file — permission already guaranteed by announcement access
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Resource loadAttachment(Long attachmentId) {
+
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new RuntimeException("Attachment not found"));
+
         return fileStorageService.load(attachment.getStoragePath());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Attachment> getAttachmentsForAnnouncement(Announcement announcement) {
         return attachmentRepository.findByAnnouncement(announcement);
     }

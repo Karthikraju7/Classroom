@@ -49,24 +49,32 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
                     throw new RuntimeException("Assignment already submitted");
                 });
 
+        // core rule: text OR file must exist
+        boolean hasText = content != null && !content.isBlank();
+        boolean hasFile = file != null && !file.isEmpty();
+
+        if (!hasText && !hasFile) {
+            throw new RuntimeException("Submission must contain text or file");
+        }
+
         AssignmentSubmission submission = new AssignmentSubmission();
         submission.setAnnouncement(assignment);
         submission.setStudent(student);
         submission.setContent(content);
 
-        if (file != null && !file.isEmpty()) {
+        if (hasFile) {
             String path = fileStorageService.save(
                     file,
-                    assignment.getCourse().getId(),
                     assignment.getId()
             );
-            submission.setFilePath(path);
+            submission.setSubmissionFilePath(path);
         }
 
         return submissionRepository.save(submission);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AssignmentSubmission> getSubmissionsForAssignment(
             Announcement assignment,
             User requester
@@ -81,11 +89,7 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
             throw new RuntimeException("Only teachers can view submissions");
         }
 
-        return submissionRepository.findAll()
-                .stream()
-                .filter(s -> s.getAnnouncement().equals(assignment))
-                .toList();
-        //List<AssignmentSubmission> findByAnnouncement(Announcement announcement);
+        return submissionRepository.findByAnnouncement(assignment);
     }
 
     @Override

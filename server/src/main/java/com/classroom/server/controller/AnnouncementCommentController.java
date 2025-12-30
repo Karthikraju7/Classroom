@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/comments")
+@RequestMapping("/announcements/{announcementId}/comments")
 @RequiredArgsConstructor
 public class AnnouncementCommentController {
 
@@ -22,8 +22,8 @@ public class AnnouncementCommentController {
 
     @PostMapping
     public AnnouncementComment add(
-            @RequestParam Long announcementId,
-            @RequestParam Long userId,
+            @PathVariable Long announcementId,
+            @RequestParam Long userId,   // TEMP → JWT later
             @RequestParam String content
     ) {
         Announcement announcement = announcementRepository.findById(announcementId)
@@ -35,7 +35,7 @@ public class AnnouncementCommentController {
         return commentService.addComment(announcement, user, content);
     }
 
-    @GetMapping("/{announcementId}")
+    @GetMapping
     public List<AnnouncementComment> get(
             @PathVariable Long announcementId
     ) {

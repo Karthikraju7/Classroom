@@ -26,7 +26,7 @@ public class Announcement {
     @Column(nullable = false)
     private AnnouncementType type;
 
-    @Column(nullable = false)
+    @Column
     private String title;
 
     @Column(columnDefinition = "TEXT")

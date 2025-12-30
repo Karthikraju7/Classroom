@@ -32,15 +32,21 @@ public class AnnouncementCommentServiceImpl implements AnnouncementCommentServic
                 .findByCourseAndUser(announcement.getCourse(), user)
                 .orElseThrow(() -> new RuntimeException("User not part of course"));
 
+        // content validation
+        if (content == null || content.isBlank()) {
+            throw new RuntimeException("Comment content cannot be empty");
+        }
+
         AnnouncementComment comment = new AnnouncementComment();
         comment.setAnnouncement(announcement);
-        comment.setUser(user);
+        comment.setAuthor(user);
         comment.setContent(content);
 
         return commentRepository.save(comment);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AnnouncementComment> getCommentsForAnnouncement(
             Announcement announcement
     ) {

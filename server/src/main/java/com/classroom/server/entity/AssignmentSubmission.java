@@ -32,19 +32,19 @@ public class AssignmentSubmission {
     private User student;
 
     @Column(columnDefinition = "TEXT")
-    private String content;          // text submission (optional)
+    private String content;               // optional
 
-    @Column(name = "file_path")
-    private String filePath;         // local storage path (optional)
+    @Column(name = "submission_file_path")
+    private String submissionFilePath;    // optional
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
 
-    @Column
-    private String grade;             // optional
+    @Column(length = 50)
+    private String grade;                 // optional
 
     @Column(columnDefinition = "TEXT")
-    private String feedback;          // optional
+    private String feedback;              // optional
 
     @PrePersist
     public void onSubmit() {

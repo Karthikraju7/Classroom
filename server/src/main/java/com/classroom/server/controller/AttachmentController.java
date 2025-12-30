@@ -1,5 +1,6 @@
 package com.classroom.server.controller;
 
+import com.classroom.server.dto.attachments.AttachmentResponse;
 import com.classroom.server.entity.Announcement;
 import com.classroom.server.entity.Attachment;
 import com.classroom.server.entity.User;
@@ -12,7 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -25,21 +25,9 @@ public class AttachmentController {
     private final AnnouncementRepository announcementRepository;
     private final UserRepository userRepository;
 
-    @PostMapping("/upload")
-    public Attachment upload(
-            @RequestParam Long announcementId,
-            @RequestParam Long userId,
-            @RequestParam MultipartFile file
-    ) {
-        Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new RuntimeException("Announcement not found"));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return attachmentService.uploadAttachment(announcement, file, user);
-    }
-
+    /**
+     * View / stream a file (Google Classroom style)
+     */
     @GetMapping("/{id}/view")
     public ResponseEntity<Resource> view(
             @PathVariable Long id,
@@ -48,21 +36,40 @@ public class AttachmentController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Resource resource = attachmentService.loadAttachment(id, user);
+        Attachment attachment = attachmentService.getAttachment(id, user);
+        Resource resource = attachmentService.loadAttachment(id);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                .contentType(MediaType.APPLICATION_PDF)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + attachment.getFileName() + "\""
+                )
+                .contentType(MediaType.parseMediaType(attachment.getFileType()))
                 .body(resource);
     }
 
+
+    /**
+     * List attachments for a given announcement
+     */
     @GetMapping("/announcement/{announcementId}")
-    public List<Attachment> list(
+    public List<AttachmentResponse> list(
             @PathVariable Long announcementId
     ) {
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
 
-        return attachmentService.getAttachmentsForAnnouncement(announcement);
+        return attachmentService.getAttachmentsForAnnouncement(announcement)
+                .stream()
+                .map(a -> {
+                    AttachmentResponse dto = new AttachmentResponse();
+                    dto.setId(a.getId());
+                    dto.setFileName(a.getFileName());
+                    dto.setFileType(a.getFileType());
+                    dto.setFileSize(a.getFileSize());
+                    return dto;
+                })
+                .toList();
     }
+
 }

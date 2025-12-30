@@ -6,6 +6,7 @@ import com.classroom.server.repository.CourseMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +18,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
     private final CourseMemberRepository courseMemberRepository;
+    private final AttachmentService attachmentService; // NEW
 
     @Override
     public Announcement createAnnouncement(
@@ -25,10 +27,11 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             AnnouncementType type,
             String title,
             String content,
-            LocalDateTime dueDate
+            LocalDateTime dueDate,
+            List<MultipartFile> files
     ) {
 
-        // 🔒 Only TEACHER can create
+        // 🔒 Role check
         CourseMember member = courseMemberRepository
                 .findByCourseAndUser(course, author)
                 .orElseThrow(() -> new RuntimeException("User not part of course"));
@@ -37,11 +40,23 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             throw new RuntimeException("Only teachers can create announcements");
         }
 
-        // assignment validation
+        // 📌 Assignment validation
         if (type == AnnouncementType.ASSIGNMENT && dueDate == null) {
             throw new RuntimeException("Assignment must have due date");
         }
 
+        // 📌 Core rule: text OR files must exist
+        boolean hasText =
+                (title != null && !title.isBlank()) ||
+                        (content != null && !content.isBlank());
+
+        boolean hasFiles = files != null && !files.isEmpty();
+
+        if (!hasText && !hasFiles) {
+            throw new RuntimeException("Announcement must have text or files");
+        }
+
+        // 1️⃣ Create announcement first
         Announcement announcement = new Announcement();
         announcement.setCourse(course);
         announcement.setAuthor(author);
@@ -50,7 +65,14 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         announcement.setContent(content);
         announcement.setDueDate(type == AnnouncementType.ASSIGNMENT ? dueDate : null);
 
-        return announcementRepository.save(announcement);
+        Announcement saved = announcementRepository.save(announcement);
+
+        // 2️⃣ Save files (if any)
+        if (hasFiles) {
+            attachmentService.saveAttachments(saved, files);
+        }
+
+        return saved;
     }
 
     @Override
