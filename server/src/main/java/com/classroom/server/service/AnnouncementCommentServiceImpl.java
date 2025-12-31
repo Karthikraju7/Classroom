@@ -5,7 +5,9 @@ import com.classroom.server.entity.AnnouncementComment;
 import com.classroom.server.entity.CourseMember;
 import com.classroom.server.entity.User;
 import com.classroom.server.repository.AnnouncementCommentRepository;
+import com.classroom.server.repository.AnnouncementRepository;
 import com.classroom.server.repository.CourseMemberRepository;
+import com.classroom.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +21,20 @@ public class AnnouncementCommentServiceImpl implements AnnouncementCommentServic
 
     private final AnnouncementCommentRepository commentRepository;
     private final CourseMemberRepository courseMemberRepository;
+    private final AnnouncementRepository announcementRepository;
+    private final UserRepository userRepository;
 
     @Override
     public AnnouncementComment addComment(
-            Announcement announcement,
-            User user,
+            Long announcementId,
+            Long userId,
             String content
     ) {
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RuntimeException("Announcement not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         // must be course member
         courseMemberRepository
@@ -48,8 +57,11 @@ public class AnnouncementCommentServiceImpl implements AnnouncementCommentServic
     @Override
     @Transactional(readOnly = true)
     public List<AnnouncementComment> getCommentsForAnnouncement(
-            Announcement announcement
+            Long announcementId
     ) {
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RuntimeException("Announcement not found"));
+
         return commentRepository
                 .findByAnnouncementOrderByCreatedAtAsc(announcement);
     }

@@ -1,5 +1,7 @@
 package com.classroom.server.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -21,10 +23,12 @@ public class AnnouncementComment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "announcement_id", nullable = false)
+    @JsonIgnore
     private Announcement announcement;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "email"})
     private User author;
 
     @Column(columnDefinition = "TEXT", nullable = false)

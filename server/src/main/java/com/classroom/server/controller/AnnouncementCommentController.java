@@ -1,5 +1,6 @@
 package com.classroom.server.controller;
 
+import com.classroom.server.dto.announcementComments.CreateCommentRequest;
 import com.classroom.server.entity.Announcement;
 import com.classroom.server.entity.AnnouncementComment;
 import com.classroom.server.entity.User;
@@ -17,31 +18,24 @@ import java.util.List;
 public class AnnouncementCommentController {
 
     private final AnnouncementCommentService commentService;
-    private final AnnouncementRepository announcementRepository;
-    private final UserRepository userRepository;
 
     @PostMapping
     public AnnouncementComment add(
             @PathVariable Long announcementId,
-            @RequestParam Long userId,   // TEMP → JWT later
-            @RequestParam String content
+            @RequestBody CreateCommentRequest request
     ) {
-        Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new RuntimeException("Announcement not found"));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return commentService.addComment(announcement, user, content);
+        return commentService.addComment(
+                announcementId,
+                request.getUserId(),
+                request.getContent()
+        );
     }
 
     @GetMapping
     public List<AnnouncementComment> get(
             @PathVariable Long announcementId
     ) {
-        Announcement announcement = announcementRepository.findById(announcementId)
-                .orElseThrow(() -> new RuntimeException("Announcement not found"));
-
-        return commentService.getCommentsForAnnouncement(announcement);
+        return commentService.getCommentsForAnnouncement(announcementId);
     }
 }
+
