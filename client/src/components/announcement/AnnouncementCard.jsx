@@ -5,10 +5,17 @@ import {
 } from "../../services/commentService";
 import CommentList from "./CommentList";
 import CommentForm from "./CommentForm";
+import { useAuth } from "../../context/AuthContext";
 
 function AnnouncementCard({ announcement }) {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const { user } = useAuth();
+  const [showAllComments, setShowAllComments] = useState(false);
+  const visibleComments = showAllComments
+                          ? comments
+                          : comments.slice(0, 1);
+
 
   useEffect(() => {
     loadComments();
@@ -18,7 +25,7 @@ function AnnouncementCard({ announcement }) {
     setLoadingComments(true);
     try {
       const data = await getCommentsByAnnouncement(announcement.id);
-      setComments(data);
+      setComments([...data].reverse());
     } catch (err) {
       console.error("Failed to load comments", err);
     } finally {
@@ -27,12 +34,12 @@ function AnnouncementCard({ announcement }) {
   }
 
   async function handleAddComment(content) {
-    try {
-      await createComment({
-        announcementId: announcement.id,
-        content,
-      });
-      loadComments();
+  try {
+    await createComment(announcement.id, {
+      userId: user.id,
+      content,
+    });
+    loadComments();
     } catch (err) {
       console.error("Failed to add comment", err);
     }
@@ -70,13 +77,25 @@ function AnnouncementCard({ announcement }) {
 
       {/* Comments */}
       <div className="pt-3 border-t space-y-2">
+        <CommentForm onSubmit={handleAddComment} />
         {loadingComments ? (
           <p className="text-sm text-gray-500">Loading comments...</p>
         ) : (
-          <CommentList comments={comments} />
-        )}
+          <>
+            <CommentList comments={visibleComments} />
 
-        <CommentForm onSubmit={handleAddComment} />
+            {comments.length > 1 && (
+              <button
+                onClick={() => setShowAllComments(!showAllComments)}
+                className="text-sm text-blue-600 hover:underline cursor-pointer"
+              >
+                {showAllComments
+                  ? "Hide comments"
+                  : `View all comments (${comments.length})`}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

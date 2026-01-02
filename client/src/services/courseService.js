@@ -16,6 +16,10 @@ export function joinCourse(courseId, userId) {
   });
 }
 
+export function getCourseMembers(courseId) {
+  return apiFetch(`/courses/${courseId}/members`);
+}
+
 // Get single course with role
 export function getCourseById(courseId, userId) {
   return apiFetch(`/courses/${courseId}?userId=${userId}`);

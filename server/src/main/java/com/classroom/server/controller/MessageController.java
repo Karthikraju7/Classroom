@@ -1,9 +1,8 @@
 package com.classroom.server.controller;
 
-import com.classroom.server.entity.Course;
+import com.classroom.server.dto.messages.SendMessageRequest;
 import com.classroom.server.entity.Message;
 import com.classroom.server.entity.User;
-import com.classroom.server.repository.CourseRepository;
 import com.classroom.server.repository.UserRepository;
 import com.classroom.server.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -12,47 +11,66 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/messages")
 @RequiredArgsConstructor
+@RequestMapping("/courses/{courseId}/messages")
 public class MessageController {
 
     private final MessageService messageService;
-    private final CourseRepository courseRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Send new message OR reply
+     * - threadId == null → new thread
+     * - threadId != null → reply
+     */
     @PostMapping
-    public Message send(
-            @RequestParam Long courseId,
-            @RequestParam Long senderId,
-            @RequestBody List<Long> recipientIds,
-            @RequestParam String content
+    public void sendMessage(
+            @PathVariable Long courseId,
+            @RequestParam Long userId,   // TEMP
+            @RequestBody SendMessageRequest request
     ) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
-
-        User sender = userRepository.findById(senderId)
+        User sender = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<User> recipients = recipientIds.stream()
-                .map(id -> userRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("User not found")))
-                .toList();
-
-        return messageService.sendMessage(course, sender, recipients, content);
+        messageService.send(courseId, sender, request);
     }
 
-    @GetMapping
-    public List<Message> inbox(
+    /**
+     * THREAD INBOX
+     * One entry per thread (latest message)
+     */
+    @GetMapping("/inbox")
+    public List<Message> threadInbox(
+            @PathVariable Long courseId,
             @RequestParam Long userId
     ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return messageService.getMessagesForUser(user);
+        return messageService.getThreadInbox(courseId, user);
     }
 
+    /**
+     * THREAD DETAILS (main message + replies)
+     */
+    @GetMapping("/thread/{threadId}")
+    public List<Message> threadMessages(
+            @PathVariable Long courseId,
+            @PathVariable Long threadId,
+            @RequestParam Long userId
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return messageService.getThreadMessages(courseId, threadId, user);
+    }
+
+    /**
+     * Mark a message as read
+     */
     @PostMapping("/{messageId}/read")
     public void markRead(
+            @PathVariable Long courseId,
             @PathVariable Long messageId,
             @RequestParam Long userId
     ) {

@@ -17,14 +17,13 @@ const FILTERS = {
 };
 
 function Home() {
-  const [courses, setCourses] = useState([]);
   const [filter, setFilter] = useState(FILTERS.ALL);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
-  const { user, logout } = useAuth();
 
-  console.log("user:", user);
+  const { user, logout, courses, setCourses } = useAuth();
+
   useEffect(() => {
     if (user?.id) {
       loadCourses();

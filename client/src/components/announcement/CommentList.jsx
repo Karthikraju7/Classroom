@@ -8,13 +8,13 @@ function CommentList({ comments }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {comments.map((c) => (
         <div
           key={c.id}
-          className="border rounded p-3 bg-gray-50"
+          className="rounded-lg border px-4 py-2 bg-gray-50"
         >
-          <p className="text-gray-800 text-sm">
+          <p className="text-sm text-gray-800 break-words">
             {c.content}
           </p>
 

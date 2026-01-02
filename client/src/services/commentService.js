@@ -1,8 +1,8 @@
 import apiFetch from "./api";
 
 // Create a comment under an announcement
-export function createComment(data) {
-  return apiFetch("/comments", {
+export function createComment(announcementId, data) {
+  return apiFetch(`/announcements/${announcementId}/comments`, {
     method: "POST",
     body: data,
   });
@@ -10,5 +10,5 @@ export function createComment(data) {
 
 // Get comments for an announcement
 export function getCommentsByAnnouncement(announcementId) {
-  return apiFetch(`/comments/${announcementId}`);
+  return apiFetch(`/announcements/${announcementId}/comments`);
 }

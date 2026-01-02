@@ -18,4 +18,14 @@
         List<CourseMember> findByUserAndRole(User user, CourseRole role);
 
         List<CourseMember> findByCourse(Course course);
+
+        Optional<CourseMember> findByCourseIdAndUserId(Long courseId, Long userId);
+
+        List<CourseMember> findByCourseIdAndRole(Long courseId, CourseRole role);
+
+        List<CourseMember> findByCourseIdAndUser_IdInAndRole(
+                Long courseId,
+                List<Long> userIds,
+                CourseRole role
+        );
     }

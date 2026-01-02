@@ -9,31 +9,33 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [courses, setCourses] = useState([]); // ✅ ADD THIS
+
   const login = async ({ email, password }) => {
-  const data = await apiFetch("/auth/login", {
-    method: "POST",
-    body: { email, password },
-  });
-  console.log("login response:", data);
-  setUser(data);
-  localStorage.setItem("user", JSON.stringify(data));
-  return data;
-};
+    const data = await apiFetch("/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
 
-const register = async ({ name, email, password, confirmPassword }) => {
-  const data = await apiFetch("/auth/register", {
-    method: "POST",
-    body: { name, email, password, confirmPassword },
-  });
+    setUser(data);
+    localStorage.setItem("user", JSON.stringify(data));
+    return data;
+  };
 
-  // auto-login after register
-  setUser(data);
-  localStorage.setItem("user", JSON.stringify(data));
-  return data;
-};
+  const register = async ({ name, email, password, confirmPassword }) => {
+    const data = await apiFetch("/auth/register", {
+      method: "POST",
+      body: { name, email, password, confirmPassword },
+    });
+
+    setUser(data);
+    localStorage.setItem("user", JSON.stringify(data));
+    return data;
+  };
 
   const logout = () => {
     setUser(null);
+    setCourses([]); // ✅ clear courses
     localStorage.removeItem("user");
   };
 
@@ -41,6 +43,8 @@ const register = async ({ name, email, password, confirmPassword }) => {
     <AuthContext.Provider
       value={{
         user,
+        courses,       // ✅ EXPOSE
+        setCourses,    // ✅ EXPOSE
         isAuthenticated: !!user,
         login,
         register,

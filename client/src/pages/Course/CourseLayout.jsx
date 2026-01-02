@@ -1,8 +1,10 @@
 import { useParams, NavLink, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CourseProvider, useCourse } from "../../context/CourseContext";
 import { getCourseById } from "../../services/courseService";
 import { useAuth } from "../../context/AuthContext";
+
+import CourseSwitcher from "../../components/course/CourseSwitcher";
 
 import Announcements from "./Announcements";
 import Attachments from "./Attachments";
@@ -14,7 +16,8 @@ import AssignmentDetail from "./AssignmentDetail";
 function CourseLayoutInner() {
   const { courseId } = useParams();
   const { setActiveCourse, setRole, activeCourse } = useCourse();
-  const { user } = useAuth();
+  const { user, courses } = useAuth(); 
+  const [showSwitcher, setShowSwitcher] = useState(false);
 
   useEffect(() => {
     async function loadCourse() {
@@ -32,7 +35,6 @@ function CourseLayoutInner() {
     }
   }, [courseId, user]);
 
-
   if (!activeCourse) {
     return <div className="p-6">Loading course...</div>;
   }
@@ -41,11 +43,31 @@ function CourseLayoutInner() {
     <div className="h-screen flex flex-col">
       {/* TOP NAVBAR */}
       <header className="h-14 flex items-center justify-between px-4 border-b bg-white">
-        <div className="font-semibold text-lg">
-          {activeCourse.name}
+        <div className="flex items-center gap-3">
+          {/* HAMBURGER */}
+          <button
+            onClick={() => setShowSwitcher(true)}
+            className="text-xl cursor-pointer"
+          >
+            ☰
+          </button>
+
+          <div className="font-semibold text-lg">
+            {activeCourse.name}
+          </div>
         </div>
+
         <div className="cursor-pointer">👤</div>
       </header>
+
+      {/* COURSE SWITCHER DRAWER */}
+      {showSwitcher && (
+        <CourseSwitcher
+          courses={courses}
+          currentCourseId={Number(courseId)}
+          onClose={() => setShowSwitcher(false)}
+        />
+      )}
 
       {/* BODY */}
       <div className="flex flex-1 overflow-hidden">
@@ -63,7 +85,7 @@ function CourseLayoutInner() {
         {/* CONTENT */}
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route index element={<Navigate to="announcements" />} />
+            <Route index element={<Announcements />} />
             <Route path="announcements" element={<Announcements />} />
             <Route path="attachments" element={<Attachments />} />
             <Route path="assignments" element={<Assignments />} />

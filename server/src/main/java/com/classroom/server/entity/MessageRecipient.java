@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
                         name = "uk_message_recipient",
                         columnNames = {"message_id", "recipient_id"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_recipient", columnList = "recipient_id")
         }
 )
 public class MessageRecipient {
