@@ -1,5 +1,6 @@
 package com.classroom.server.service;
 
+import com.classroom.server.dto.messages.MessageResponse;
 import com.classroom.server.dto.messages.SendMessageRequest;
 import com.classroom.server.entity.*;
 import com.classroom.server.repository.CourseMemberRepository;
@@ -103,36 +104,72 @@ public class MessageServiceImpl implements MessageService {
      * Inbox = ONE entry per thread (latest message of each thread)
      */
     @Override
-    public List<Message> getThreadInbox(Long courseId, User user) {
+    public List<MessageResponse> getThreadInbox(Long courseId, User user){
 
-        // 1️⃣ All messages received by user in course
-        List<MessageRecipient> received = messageRecipientRepository
-                .findByRecipientAndMessage_CourseId(user, courseId);
+    // 1️⃣ Messages received by user
+        List<MessageRecipient> received =
+                messageRecipientRepository.findByRecipientAndMessage_CourseId(user, courseId);
 
-        // 2️⃣ Map: threadId -> latest message
-        Map<Long, Message> latestByThread = new HashMap<>();
+        List<Message> receivedMessages = received.stream()
+                .map(MessageRecipient::getMessage)
+                .toList();
 
-        for (MessageRecipient mr : received) {
-            Message msg = mr.getMessage();
+        // 2️⃣ Messages sent by user
+        List<Message> sentMessages =
+                messageRepository.findByCourseAndSender(
+                        courseMemberRepository
+                                .findByCourseIdAndUserId(courseId, user.getId())
+                                .orElseThrow()
+                                .getCourse(),
+                        user
+                );
+
+        // 3️⃣ Merge all messages
+        List<Message> allMessages = new ArrayList<>();
+        allMessages.addAll(receivedMessages);
+        allMessages.addAll(sentMessages);
+
+        // 4️⃣ Latest message per thread
+        Map<Long, Message> mainByThread = new HashMap<>();
+        Map<Long, LocalDateTime> latestActivity = new HashMap<>();
+
+        for (Message msg : allMessages) {
             Long threadId = msg.getThreadId();
+            if (threadId == null) continue;
 
-            Message existing = latestByThread.get(threadId);
-            if (existing == null || msg.getCreatedAt().isAfter(existing.getCreatedAt())) {
-                latestByThread.put(threadId, msg);
+            // Track latest activity time
+            latestActivity.put(
+                    threadId,
+                    latestActivity.containsKey(threadId)
+                            ? latestActivity.get(threadId).isAfter(msg.getCreatedAt())
+                            ? latestActivity.get(threadId)
+                            : msg.getCreatedAt()
+                            : msg.getCreatedAt()
+            );
+
+            // Store MAIN message only
+            if (msg.getId().equals(threadId)) {
+                mainByThread.put(threadId, msg);
             }
         }
 
-        // 3️⃣ Sort latest messages by time desc (like inbox)
-        return latestByThread.values().stream()
-                .sorted(Comparator.comparing(Message::getCreatedAt).reversed())
+
+        return mainByThread.values().stream()
+                .sorted((a, b) ->
+                        latestActivity.get(b.getThreadId())
+                                .compareTo(latestActivity.get(a.getThreadId()))
+                )
+                .map(this::toResponse)
                 .toList();
+
     }
+
 
     /**
      * All messages (main + replies) of a thread
      */
     @Override
-    public List<Message> getThreadMessages(Long courseId, Long threadId, User user) {
+    public List<MessageResponse> getThreadMessages(Long courseId, Long threadId, User user) {
 
         // user must be part of course
         courseMemberRepository
@@ -140,7 +177,10 @@ public class MessageServiceImpl implements MessageService {
                 .orElseThrow(() -> new RuntimeException("User not part of course"));
 
         return messageRepository
-                .findByCourseIdAndThreadIdOrderByCreatedAtAsc(courseId, threadId);
+                .findByCourseIdAndThreadIdOrderByCreatedAtAsc(courseId, threadId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     /**
@@ -157,4 +197,24 @@ public class MessageServiceImpl implements MessageService {
             mr.setReadAt(LocalDateTime.now());
         }
     }
+    private MessageResponse toResponse(Message m) {
+
+        List<String> recipients =
+                messageRecipientRepository.findByMessage(m)
+                        .stream()
+                        .map(mr -> mr.getRecipient().getName())
+                        .toList();
+
+        return new MessageResponse(
+                m.getId(),
+                m.getThreadId(),
+                m.getContent(),
+                m.getSender().getId(),
+                m.getSender().getName(),
+                recipients,
+                m.getCreatedAt()
+        );
+    }
+
+
 }

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../pages/Home/Home";
 import CourseLayout from "../pages/Course/CourseLayout";
 import Auth from "../pages/Auth/Auth";
+import AnnouncementDetail from "../pages/Course/AnnouncementDetail";
 import { useAuth } from "../context/AuthContext";
 
 function ProtectedRoute({ children }) {
@@ -38,7 +39,8 @@ function AppRoutes() {
             <CourseLayout />
           </ProtectedRoute>
         }
-      />
+      >
+      </Route>
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />

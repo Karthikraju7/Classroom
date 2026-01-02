@@ -7,6 +7,7 @@ import com.classroom.server.repository.UserRepository;
 import com.classroom.server.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.classroom.server.dto.messages.MessageResponse;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class MessageController {
      * One entry per thread (latest message)
      */
     @GetMapping("/inbox")
-    public List<Message> threadInbox(
+    public List<MessageResponse> threadInbox(
             @PathVariable Long courseId,
             @RequestParam Long userId
     ) {
@@ -54,7 +55,7 @@ public class MessageController {
      * THREAD DETAILS (main message + replies)
      */
     @GetMapping("/thread/{threadId}")
-    public List<Message> threadMessages(
+    public List<MessageResponse> threadMessages(
             @PathVariable Long courseId,
             @PathVariable Long threadId,
             @RequestParam Long userId

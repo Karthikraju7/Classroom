@@ -12,6 +12,7 @@ import Assignments from "./Assignments";
 import People from "./People";
 import Messages from "./Messages";
 import AssignmentDetail from "./AssignmentDetail";
+import AnnouncementDetail from "./AnnouncementDetail";
 
 function CourseLayoutInner() {
   const { courseId } = useParams();
@@ -87,6 +88,7 @@ function CourseLayoutInner() {
           <Routes>
             <Route index element={<Announcements />} />
             <Route path="announcements" element={<Announcements />} />
+            <Route path="announcements/:announcementId" element={<AnnouncementDetail />} />
             <Route path="attachments" element={<Attachments />} />
             <Route path="assignments" element={<Assignments />} />
             <Route path="assignments/:announcementId" element={<AssignmentDetail />} />

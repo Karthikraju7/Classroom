@@ -5,6 +5,7 @@ import {
   getAnnouncementsByCourse,
   createAnnouncement,
 } from "../../services/announcementService";
+import { getCourseMembers } from "../../services/courseService";
 import AnnouncementCard from "../../components/announcement/AnnouncementCard";
 import AnnouncementForm from "../../components/announcement/AnnouncementForm";
 import { useAuth } from "../../context/AuthContext";
@@ -12,14 +13,16 @@ import { useAuth } from "../../context/AuthContext";
 function Announcements() {
   const { courseId } = useParams();
   const { role } = useCourse();
+  const { user } = useAuth();
 
   const [announcements, setAnnouncements] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     loadAnnouncements();
+    loadStudents();
   }, [courseId]);
 
   async function loadAnnouncements() {
@@ -34,16 +37,30 @@ function Announcements() {
     }
   }
 
-  async function handleCreate(formData) {
-  try {
-    await createAnnouncement(formData);
-    setShowForm(false);
-    loadAnnouncements();
-  } catch (err) {
-    console.error("Failed to create announcement", err);
-  }
-}
+  async function loadStudents() {
+    try {
+      const members = await getCourseMembers(courseId);
 
+      // ONLY students
+      const onlyStudents = members.filter(
+        (m) => m.role === "STUDENT"
+      );
+
+      setStudents(onlyStudents);
+    } catch (err) {
+      console.error("Failed to load students", err);
+    }
+  }
+
+  async function handleCreate(formData) {
+    try {
+      await createAnnouncement(formData);
+      setShowForm(false);
+      loadAnnouncements();
+    } catch (err) {
+      console.error("Failed to create announcement", err);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -54,7 +71,7 @@ function Announcements() {
         {role === "TEACHER" && !showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
+            className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer"
           >
             Create
           </button>
@@ -64,10 +81,9 @@ function Announcements() {
       {/* Create form */}
       {showForm && role === "TEACHER" && (
         <AnnouncementForm
+          students={students}
           onSubmit={handleCreate}
           onCancel={() => setShowForm(false)}
-          courseId={courseId}
-          userId={user.id}   
         />
       )}
 

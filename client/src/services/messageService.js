@@ -1,21 +1,47 @@
 import apiFetch from "./api";
 
-// Send a message (student → teacher OR teacher → students)
-export function sendMessage(data) {
-  return apiFetch("/messages", {
-    method: "POST",
-    body: data,
-  });
+/**
+ * SEND NEW MESSAGE or REPLY
+ *
+ * New thread  → do NOT send threadId
+ * Reply       → send threadId
+ */
+export function sendMessage(courseId, userId, data) {
+  return apiFetch(
+    `/courses/${courseId}/messages?userId=${userId}`,
+    {
+      method: "POST",
+      body: data,
+    }
+  );
 }
 
-// Get messages for current user in a course
-export function getMessages() {
-  return apiFetch("/messages");
+/**
+ * GET INBOX (one row per thread)
+ */
+export function getInbox(courseId, userId) {
+  return apiFetch(
+    `/courses/${courseId}/messages/inbox?userId=${userId}`
+  );
 }
 
-// Mark message as read
-export function markMessageAsRead(messageId) {
-  return apiFetch(`/messages/${messageId}/read`, {
-    method: "POST",
-  });
+/**
+ * GET FULL THREAD (main + replies)
+ */
+export function getThreadMessages(courseId, threadId, userId) {
+  return apiFetch(
+    `/courses/${courseId}/messages/thread/${threadId}?userId=${userId}`
+  );
+}
+
+/**
+ * MARK MESSAGE AS READ
+ */
+export function markMessageAsRead(courseId, messageId, userId) {
+  return apiFetch(
+    `/courses/${courseId}/messages/${messageId}/read?userId=${userId}`,
+    {
+      method: "POST",
+    }
+  );
 }

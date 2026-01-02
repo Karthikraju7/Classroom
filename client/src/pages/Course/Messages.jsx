@@ -1,102 +1,208 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { useCourse } from "../../context/CourseContext";
+import { useAuth } from "../../context/AuthContext";
 import {
-  getMessages,
+  getInbox,
+  getThreadMessages,
   sendMessage,
   markMessageAsRead,
 } from "../../services/messageService";
+import { getCourseMembers } from "../../services/courseService";
 import MessageItem from "../../components/message/MessageItem";
 import MessageForm from "../../components/message/MessageForm";
 
 function Messages() {
+  const { courseId } = useParams();
   const { role } = useCourse();
-
-  const [messages, setMessages] = useState([]);
+  const { user } = useAuth(); // TEMP auth
+  const userId = user.id;
+  const currentUserName = user.name;
+  const [threads, setThreads] = useState([]);
+  const [activeThreadId, setActiveThreadId] = useState(null);
+  const [threadMessages, setThreadMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [showCompose, setShowCompose] = useState(false);
+
 
   useEffect(() => {
-    loadMessages();
-  }, []);
+    loadInbox();
+  }, [courseId]);
 
-  async function loadMessages() {
+  async function loadInbox() {
     setLoading(true);
     try {
-      const data = await getMessages();
-      setMessages(data);
+      const data = await getInbox(courseId, userId);
+      setThreads(data);
     } catch (err) {
-      console.error("Failed to load messages", err);
+      console.error("Failed to load inbox", err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSend(content) {
-    setSending(true);
+  useEffect(() => {
+    if (role === "TEACHER") {
+      fetchStudents();
+    }
+  }, [courseId]);
+
+  async function fetchStudents() {
+    const data = await getCourseMembers(courseId); // you already have this
+    setStudents(data.filter(m => m.role === "STUDENT"));
+  }
+
+
+  async function openThread(threadId) {
+    setActiveThreadId(threadId);
     try {
-      await sendMessage({ content });
-      loadMessages();
+      const data = await getThreadMessages(courseId, threadId, userId);
+      setThreadMessages(data);
     } catch (err) {
-      console.error("Failed to send message", err);
-    } finally {
-      setSending(false);
+      console.error("Failed to load thread", err);
     }
   }
 
-  async function handleRead(messageId) {
-    try {
-      await markMessageAsRead(messageId);
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId ? { ...m, readAt: new Date().toISOString() } : m
-        )
-      );
-    } catch (err) {
-      console.error("Failed to mark message as read", err);
-    }
+  async function handleSend({ content }) {
+    if (!activeThreadId) return;
+
+    await sendMessage(courseId, userId, {
+      content,
+      threadId: activeThreadId,
+    });
+
+    openThread(activeThreadId);
   }
+
+
+
+  // -------- THREAD SPLIT LOGIC --------
+  const mainMessage = threadMessages.find(
+    (m) => m.id === m.threadId
+  );
+
+  const replies = threadMessages
+    .filter((m) => m.id !== m.threadId)
+    .sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Messages</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-semibold">Messages</h1>
 
-      {/* Info */}
-      {role === "STUDENT" && (
-        <p className="text-sm text-gray-600">
-          You can message only the instructor. Messages are private.
-        </p>
-      )}
+        {role === "TEACHER" && !activeThreadId && (
+          <button
+            onClick={() => setShowCompose(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm cursor-pointer"
+          >
+            New Message
+          </button>
+        )}
+      </div>
+      <p className="text-sm text-gray-600">
+        {role === "STUDENT"
+          ? "You can message only the instructor."
+          : "Messages are private and sent individually."}
+      </p>
 
-      {role === "TEACHER" && (
-        <p className="text-sm text-gray-600">
-          Messages are sent privately to selected students.
-        </p>
-      )}
-
-      {/* Message list */}
-      {loading ? (
-        <p className="text-gray-500">Loading messages...</p>
-      ) : messages.length === 0 ? (
-        <p className="text-gray-500">No messages yet</p>
-      ) : (
-        <div className="space-y-3">
-          {messages.map((m) => (
-            <MessageItem
-              key={m.id}
-              message={m}
-              onRead={handleRead}
-            />
-          ))}
+      {showCompose && (
+        <div className="border rounded p-4 space-y-3">
+          <MessageForm
+            students={students}
+            onSend={async ({ content, recipientIds }) => {
+              await sendMessage(courseId, userId, {
+                content,
+                recipientIds,
+                threadId: null,
+              });
+              setShowCompose(false);
+              loadInbox();
+            }}
+            onCancel={() => setShowCompose(false)}
+          />
         </div>
       )}
 
-      {/* Send message */}
-      <div className="border-t pt-4">
-        <MessageForm onSubmit={handleSend} />
-        {sending && (
-          <p className="text-xs text-gray-400 mt-1">Sending…</p>
+
+      {/* ================= INBOX ================= */}
+      {!activeThreadId && !showCompose && (
+        <>
+          {loading ? (
+            <p className="text-gray-500">Loading…</p>
+          ) : threads.length === 0 ? (
+            <p className="text-gray-500">No messages yet</p>
+          ) : (
+            <div className="space-y-3">
+              {threads.map((t) => {
+                  const isMain = t.id === t.threadId;
+
+                  return (
+                    <MessageItem
+                      message={t}
+                      currentUserId={userId}
+                      currentUserName={currentUserName}
+                      isThread
+                      isInbox
+                      onOpen={() => openThread(t.threadId)}
+                    />
+                  );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ================= THREAD VIEW ================= */}
+      {activeThreadId && (
+        <>
+          <button
+            className="text-sm text-blue-600 cursor-pointer"
+            onClick={() => {
+              setActiveThreadId(null);
+              setThreadMessages([]);
+            }}
+          >
+            ← Back to inbox
+          </button>
+
+          <div className="space-y-4">
+            {/* Main message */}
+            {mainMessage && (
+              <MessageItem
+                message={mainMessage}
+                currentUserId={userId}
+                currentUserName={currentUserName}
+                isMain
+              />
+            )}
+
+            {/* Replies */}
+            {replies.map((m) => (
+              <MessageItem
+                key={m.id}
+                message={m}
+                currentUserId={userId}
+                currentUserName={currentUserName}
+                isReply
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ================= SEND / REPLY ================= */}
+      {activeThreadId && (
+          <div className="border-t pt-4">
+            <MessageForm
+              isReply
+              onSend={handleSend}
+            />
+          </div>
         )}
-      </div>
     </div>
   );
 }

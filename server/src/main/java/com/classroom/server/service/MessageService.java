@@ -1,5 +1,6 @@
 package com.classroom.server.service;
 
+import com.classroom.server.dto.messages.MessageResponse;
 import com.classroom.server.dto.messages.SendMessageRequest;
 import com.classroom.server.entity.Message;
 import com.classroom.server.entity.User;
@@ -18,12 +19,8 @@ public interface MessageService {
     /**
      * Inbox = one entry per thread (latest message of each thread)
      */
-    List<Message> getThreadInbox(Long courseId, User user);
-
-    /**
-     * All messages (main + replies) of a thread
-     */
-    List<Message> getThreadMessages(Long courseId, Long threadId, User user);
+    List<MessageResponse> getThreadInbox(Long courseId, User user);
+    List<MessageResponse> getThreadMessages(Long courseId, Long threadId, User user);
 
     /**
      * Mark a single message as read (per recipient)
