@@ -1,5 +1,6 @@
 package com.classroom.server.service;
 
+import com.classroom.server.dto.announcementComments.AnnouncementCommentResponse;
 import com.classroom.server.entity.Announcement;
 import com.classroom.server.entity.AnnouncementComment;
 import com.classroom.server.entity.CourseMember;
@@ -25,7 +26,7 @@ public class AnnouncementCommentServiceImpl implements AnnouncementCommentServic
     private final UserRepository userRepository;
 
     @Override
-    public AnnouncementComment addComment(
+    public AnnouncementCommentResponse addComment(
             Long announcementId,
             Long userId,
             String content
@@ -41,7 +42,6 @@ public class AnnouncementCommentServiceImpl implements AnnouncementCommentServic
                 .findByCourseAndUser(announcement.getCourse(), user)
                 .orElseThrow(() -> new RuntimeException("User not part of course"));
 
-        // content validation
         if (content == null || content.isBlank()) {
             throw new RuntimeException("Comment content cannot be empty");
         }
@@ -51,18 +51,35 @@ public class AnnouncementCommentServiceImpl implements AnnouncementCommentServic
         comment.setAuthor(user);
         comment.setContent(content);
 
-        return commentRepository.save(comment);
+        AnnouncementComment saved = commentRepository.save(comment);
+
+        return new AnnouncementCommentResponse(
+                saved.getId(),
+                saved.getContent(),
+                saved.getCreatedAt(),
+                user.getId(),
+                user.getName()
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<AnnouncementComment> getCommentsForAnnouncement(
+    public List<AnnouncementCommentResponse> getCommentsForAnnouncement(
             Long announcementId
     ) {
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
 
         return commentRepository
-                .findByAnnouncementOrderByCreatedAtAsc(announcement);
+                .findByAnnouncementOrderByCreatedAtAsc(announcement)
+                .stream()
+                .map(c -> new AnnouncementCommentResponse(
+                        c.getId(),
+                        c.getContent(),
+                        c.getCreatedAt(),
+                        c.getAuthor().getId(),
+                        c.getAuthor().getName()
+                ))
+                .toList();
     }
 }

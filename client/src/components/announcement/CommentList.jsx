@@ -14,7 +14,11 @@ function CommentList({ comments }) {
           key={c.id}
           className="rounded-lg border px-4 py-2 bg-gray-50"
         >
-          <p className="text-sm text-gray-800 break-words">
+          <p className="text-sm font-medium text-gray-900">
+            {c.authorName}
+          </p>
+
+          <p className="text-sm text-gray-800 wrap-break-word">
             {c.content}
           </p>
 

@@ -1,5 +1,6 @@
 package com.classroom.server.controller;
 
+import com.classroom.server.dto.announcementComments.AnnouncementCommentResponse;
 import com.classroom.server.dto.announcementComments.CreateCommentRequest;
 import com.classroom.server.entity.Announcement;
 import com.classroom.server.entity.AnnouncementComment;
@@ -20,7 +21,7 @@ public class AnnouncementCommentController {
     private final AnnouncementCommentService commentService;
 
     @PostMapping
-    public AnnouncementComment add(
+    public AnnouncementCommentResponse add(
             @PathVariable Long announcementId,
             @RequestBody CreateCommentRequest request
     ) {
@@ -32,10 +33,9 @@ public class AnnouncementCommentController {
     }
 
     @GetMapping
-    public List<AnnouncementComment> get(
+    public List<AnnouncementCommentResponse> get(
             @PathVariable Long announcementId
     ) {
         return commentService.getCommentsForAnnouncement(announcementId);
     }
 }
-

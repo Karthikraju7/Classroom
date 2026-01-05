@@ -13,9 +13,15 @@ function AssignmentDetail() {
 
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // student
   const [submissionText, setSubmissionText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // teacher
+  const [activeTab, setActiveTab] = useState("INSTRUCTIONS"); // INSTRUCTIONS | STUDENT_WORK
   const [submissions, setSubmissions] = useState([]);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   useEffect(() => {
     loadAssignment();
@@ -76,66 +82,171 @@ function AssignmentDetail() {
 
   return (
     <div className="space-y-6">
-      {/* Assignment info */}
-      <div>
-        <h1 className="text-2xl font-semibold">{assignment.title}</h1>
 
-        {assignment.dueDate && (
-          <p className="text-red-600 mt-1">
-            Due: {new Date(assignment.dueDate).toLocaleString()}
-          </p>
-        )}
-
-        {assignment.content && (
-          <p className="mt-4 text-gray-700">{assignment.content}</p>
-        )}
-      </div>
-
-      {/* Student submission */}
+      {/* ================= STUDENT VIEW ================= */}
       {role === "STUDENT" && (
-        <div className="border rounded p-4 space-y-3">
-          <h2 className="font-semibold">Your Submission</h2>
+        <div className="flex gap-6">
+          {/* LEFT — Instructions */}
+          <div className="w-3/4 space-y-4">
+            <h1 className="text-2xl font-semibold">{assignment.title}</h1>
 
-          <textarea
-            rows={5}
-            className="w-full border rounded px-3 py-2"
-            placeholder="Write your answer here..."
-            value={submissionText}
-            onChange={(e) => setSubmissionText(e.target.value)}
-          />
+            {assignment.dueDate && (
+              <p className="text-red-600">
+                Due: {new Date(assignment.dueDate).toLocaleString()}
+              </p>
+            )}
 
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-          >
-            {submitting ? "Submitting..." : "Submit"}
-          </button>
+            {assignment.content && (
+              <p className="text-gray-700 whitespace-pre-line">
+                {assignment.content}
+              </p>
+            )}
+          </div>
+
+          {/* RIGHT — Your Work */}
+          <div className="w-1/4 border rounded p-4 space-y-3">
+            <h2 className="font-semibold">Your work</h2>
+
+            <textarea
+              rows={5}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Write your answer here..."
+              value={submissionText}
+              onChange={(e) => setSubmissionText(e.target.value)}
+            />
+
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            >
+              {submitting ? "Submitting..." : "Turn in"}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Teacher submissions view */}
+      {/* ================= TEACHER VIEW ================= */}
       {role === "TEACHER" && (
-        <div className="space-y-3">
-          <h2 className="font-semibold">Student Submissions</h2>
+        <>
+          {/* Tabs */}
+          <div className="flex gap-6 border-b">
+            <button
+              onClick={() => setActiveTab("INSTRUCTIONS")}
+              className={`pb-2 ${
+                activeTab === "INSTRUCTIONS"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600"
+              }`}
+            >
+              Instructions
+            </button>
 
-          {submissions.length === 0 ? (
-            <p className="text-gray-500">No submissions yet</p>
-          ) : (
-            submissions.map((s) => (
-              <div
-                key={s.id}
-                className="border rounded p-3 bg-gray-50"
-              >
-                <p className="text-sm text-gray-700">{s.content}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Submitted at{" "}
-                  {new Date(s.submittedAt).toLocaleString()}
+            <button
+              onClick={() => setActiveTab("STUDENT_WORK")}
+              className={`pb-2 ${
+                activeTab === "STUDENT_WORK"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600"
+              }`}
+            >
+              Student work
+            </button>
+          </div>
+
+          {/* ---------- Instructions TAB ---------- */}
+          {activeTab === "INSTRUCTIONS" && (
+            <div className="space-y-4">
+              <h1 className="text-2xl font-semibold">{assignment.title}</h1>
+
+              {assignment.dueDate && (
+                <p className="text-red-600">
+                  Due: {new Date(assignment.dueDate).toLocaleString()}
                 </p>
-              </div>
-            ))
+              )}
+
+              {assignment.content && (
+                <p className="text-gray-700 whitespace-pre-line">
+                  {assignment.content}
+                </p>
+              )}
+            </div>
           )}
-        </div>
+
+          {/* ---------- Student Work TAB ---------- */}
+          {activeTab === "STUDENT_WORK" && (
+            <div className="flex gap-6">
+              {/* LEFT — Selected Student Submission */}
+              <div className="w-3/4 border rounded p-6">
+                {selectedSubmission ? (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-semibold">
+                      Student submission
+                    </h2>
+
+                    <p className="text-sm text-gray-500">
+                      Submitted at{" "}
+                      {new Date(
+                        selectedSubmission.submittedAt
+                      ).toLocaleString()}
+                    </p>
+
+                    <p className="text-gray-800 whitespace-pre-line">
+                      {selectedSubmission.content}
+                    </p>
+
+                    <div className="pt-4 border-t space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Grade"
+                        className="border rounded px-3 py-2 w-32"
+                      />
+
+                      <textarea
+                        rows={3}
+                        placeholder="Feedback"
+                        className="w-full border rounded px-3 py-2"
+                      />
+
+                      <button className="px-4 py-2 bg-green-600 text-white rounded">
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">
+                    Select a student to view submission
+                  </p>
+                )}
+              </div>
+
+              {/* RIGHT — Student List */}
+              <div className="w-1/4 border rounded p-4 space-y-3">
+                <h2 className="font-semibold">Students</h2>
+
+                {submissions.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No submissions yet
+                  </p>
+                ) : (
+                  submissions.map((s) => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedSubmission(s)}
+                      className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                        selectedSubmission?.id === s.id
+                          ? "bg-blue-100"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      Student
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

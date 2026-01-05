@@ -86,15 +86,15 @@ function CourseLayoutInner() {
         {/* CONTENT */}
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route index element={<Announcements />} />
-            <Route path="announcements" element={<Announcements />} />
-            <Route path="announcements/:announcementId" element={<AnnouncementDetail />} />
-            <Route path="attachments" element={<Attachments />} />
-            <Route path="assignments" element={<Assignments />} />
-            <Route path="assignments/:announcementId" element={<AssignmentDetail />} />
-            <Route path="people" element={<People />} />
-            <Route path="messages" element={<Messages />} />
-          </Routes>
+          <Route index element={<Announcements />} />
+          <Route path="announcements" element={<Announcements />} />
+          <Route path="announcements/:announcementId" element={<AnnouncementDetail />} />
+          <Route path="attachments" element={<Attachments />} />
+          <Route path="assignments" element={<Assignments />} />
+          <Route path="assignments/:announcementId" element={<AssignmentDetail />} />
+          <Route path="people" element={<People />} />
+          <Route path="messages" element={<Messages />} />
+        </Routes>
         </main>
       </div>
     </div>

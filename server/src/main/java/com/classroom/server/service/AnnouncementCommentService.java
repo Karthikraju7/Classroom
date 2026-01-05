@@ -1,18 +1,19 @@
 package com.classroom.server.service;
 
+import com.classroom.server.dto.announcementComments.AnnouncementCommentResponse;
 import com.classroom.server.entity.AnnouncementComment;
 
 import java.util.List;
 
 public interface AnnouncementCommentService {
 
-    AnnouncementComment addComment(
+    AnnouncementCommentResponse addComment(
             Long announcementId,
             Long userId,
             String content
     );
 
-    List<AnnouncementComment> getCommentsForAnnouncement(
+    List<AnnouncementCommentResponse> getCommentsForAnnouncement(
             Long announcementId
     );
 }

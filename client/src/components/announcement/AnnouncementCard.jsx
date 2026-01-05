@@ -30,8 +30,13 @@ function AnnouncementCard({ announcement }) {
   const { courseId } = useParams();
 
   function openDetail() {
-    navigate(`/courses/${courseId}/announcements/${announcement.id}`);
+    if (announcement.type === "ASSIGNMENT") {
+      navigate(`/courses/${courseId}/assignments/${announcement.id}`);
+    } else {
+      navigate(`/courses/${courseId}/announcements/${announcement.id}`);
+    }
   }
+
 
 
   useEffect(() => {
