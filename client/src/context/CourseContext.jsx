@@ -4,7 +4,7 @@ const CourseContext = createContext(null);
 
 export function CourseProvider({ children }) {
   const [activeCourse, setActiveCourse] = useState(null);
-  const [role, setRole] = useState(null); // TEACHER | STUDENT
+  const [role, setRole] = useState(null);
 
   return (
     <CourseContext.Provider

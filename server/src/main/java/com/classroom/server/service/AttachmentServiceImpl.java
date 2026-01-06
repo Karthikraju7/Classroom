@@ -20,10 +20,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     private final AttachmentRepository attachmentRepository;
     private final FileStorageService fileStorageService;
     private final CourseMemberRepository courseMemberRepository;
-
-    /**
-     * Called ONLY from AnnouncementService after announcement is created
-     */
     @Override
     public void saveAttachments(
             Announcement announcement,
@@ -60,10 +56,6 @@ public class AttachmentServiceImpl implements AttachmentService {
         return attachment;
     }
 
-
-    /**
-     * Streams file — permission already guaranteed by announcement access
-     */
     @Override
     @Transactional(readOnly = true)
     public Resource loadAttachment(Long attachmentId) {

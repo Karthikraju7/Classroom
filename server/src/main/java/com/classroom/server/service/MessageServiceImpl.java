@@ -22,30 +22,19 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final MessageRecipientRepository messageRecipientRepository;
     private final CourseMemberRepository courseMemberRepository;
-
-    /**
-     * Send new mail OR reply
-     * - threadId == null → new thread
-     * - threadId != null → reply in same thread
-     */
     @Override
     public void send(Long courseId, User sender, SendMessageRequest request) {
-
-        // 1️⃣ Sender must be part of course
         CourseMember senderMember = courseMemberRepository
                 .findByCourseIdAndUserId(courseId, sender.getId())
                 .orElseThrow(() -> new RuntimeException("Sender not part of course"));
-
-        // 2️⃣ Create message (no threadId yet)
         Message message = new Message();
         message.setCourse(senderMember.getCourse());
         message.setSender(sender);
         message.setContent(request.getContent());
 
-        // 3️⃣ Save to generate ID
         Message savedMessage = messageRepository.save(message);
 
-        // 4️⃣ THREAD LOGIC
+        //THREAD
         if (request.getThreadId() == null) {
             // New topic
             savedMessage.setThreadId(savedMessage.getId());
@@ -56,7 +45,6 @@ public class MessageServiceImpl implements MessageService {
 
         messageRepository.save(savedMessage);
 
-        // 5️⃣ Resolve recipients based on role
         List<CourseMember> recipientMembers;
 
         if (senderMember.getRole() == CourseRole.STUDENT) {
@@ -91,7 +79,6 @@ public class MessageServiceImpl implements MessageService {
             throw new RuntimeException("Invalid role");
         }
 
-        // 6️⃣ Save inbox entries
         for (CourseMember cm : recipientMembers) {
             MessageRecipient mr = new MessageRecipient();
             mr.setMessage(savedMessage);
@@ -100,13 +87,8 @@ public class MessageServiceImpl implements MessageService {
         }
     }
 
-    /**
-     * Inbox = ONE entry per thread (latest message of each thread)
-     */
     @Override
     public List<MessageResponse> getThreadInbox(Long courseId, User user){
-
-    // 1️⃣ Messages received by user
         List<MessageRecipient> received =
                 messageRecipientRepository.findByRecipientAndMessage_CourseId(user, courseId);
 
@@ -114,7 +96,6 @@ public class MessageServiceImpl implements MessageService {
                 .map(MessageRecipient::getMessage)
                 .toList();
 
-        // 2️⃣ Messages sent by user
         List<Message> sentMessages =
                 messageRepository.findByCourseAndSender(
                         courseMemberRepository
@@ -124,12 +105,10 @@ public class MessageServiceImpl implements MessageService {
                         user
                 );
 
-        // 3️⃣ Merge all messages
         List<Message> allMessages = new ArrayList<>();
         allMessages.addAll(receivedMessages);
         allMessages.addAll(sentMessages);
 
-        // 4️⃣ Latest message per thread
         Map<Long, Message> mainByThread = new HashMap<>();
         Map<Long, LocalDateTime> latestActivity = new HashMap<>();
 
@@ -146,8 +125,6 @@ public class MessageServiceImpl implements MessageService {
                             : msg.getCreatedAt()
                             : msg.getCreatedAt()
             );
-
-            // Store MAIN message only
             if (msg.getId().equals(threadId)) {
                 mainByThread.put(threadId, msg);
             }
@@ -164,14 +141,9 @@ public class MessageServiceImpl implements MessageService {
 
     }
 
-
-    /**
-     * All messages (main + replies) of a thread
-     */
     @Override
     public List<MessageResponse> getThreadMessages(Long courseId, Long threadId, User user) {
 
-        // user must be part of course
         courseMemberRepository
                 .findByCourseIdAndUserId(courseId, user.getId())
                 .orElseThrow(() -> new RuntimeException("User not part of course"));
@@ -183,9 +155,7 @@ public class MessageServiceImpl implements MessageService {
                 .toList();
     }
 
-    /**
-     * Mark message as read (per recipient)
-     */
+
     @Override
     public void markAsRead(Long messageId, User user) {
 

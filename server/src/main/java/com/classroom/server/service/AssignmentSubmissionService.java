@@ -12,8 +12,7 @@ public interface AssignmentSubmissionService {
     AssignmentSubmission submitAssignment(
             Announcement assignment,
             User student,
-            String content,
-            MultipartFile file
+            MultipartFile[] files
     );
 
     List<AssignmentSubmission> getSubmissionsForAssignment(

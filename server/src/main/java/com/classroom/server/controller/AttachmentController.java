@@ -26,7 +26,7 @@ public class AttachmentController {
     private final UserRepository userRepository;
 
     /**
-     * View / stream a file (Google Classroom style)
+     * View a file
      */
     @GetMapping("/{id}/view")
     public ResponseEntity<Resource> view(

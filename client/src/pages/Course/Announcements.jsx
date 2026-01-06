@@ -41,7 +41,7 @@ function Announcements() {
     try {
       const members = await getCourseMembers(courseId);
 
-      // ONLY students
+      // only students
       const onlyStudents = members.filter(
         (m) => m.role === "STUDENT"
       );

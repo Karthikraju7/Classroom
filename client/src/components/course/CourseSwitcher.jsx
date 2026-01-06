@@ -8,17 +8,16 @@ const CourseSwitcher = ({ courses, onClose, currentCourseId }) => {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/30 z-40"
         onClick={onClose}
       />
 
-      {/* Drawer */}
+      {/* Side Nav */}
       <div className="fixed left-0 top-0 h-full w-72 bg-white z-50 shadow-lg p-4">
         <h2 className="text-lg font-semibold mb-4">My Courses</h2>
 
-        {/* HOME LINK */}
+        {/* Home */}
         <div
           onClick={() => {
             navigate("/");
@@ -32,7 +31,7 @@ const CourseSwitcher = ({ courses, onClose, currentCourseId }) => {
 
         <hr className="mb-3" />
 
-        {/* COURSES */}
+        {/* courses */}
         {courses.length === 0 ? (
           <p className="text-sm text-gray-500">No courses</p>
         ) : (

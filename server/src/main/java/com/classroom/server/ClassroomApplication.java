@@ -11,7 +11,7 @@ public class ClassroomApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ClassroomApplication.class, args);
-		System.out.println("🚀 Classroom Server Started Successfully");
+		System.out.println("Classroom Server Started Successfully");
 	}
 
 	@GetMapping("/health")

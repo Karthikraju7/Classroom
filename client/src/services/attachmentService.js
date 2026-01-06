@@ -5,7 +5,7 @@ export function getAttachmentsByAnnouncement(announcementId) {
   return apiFetch(`/attachments/announcement/${announcementId}`);
 }
 
-// View attachment (PDF opens inline)
+// View attachment
 export function viewAttachment(attachmentId) {
   return apiFetch(`/attachments/${attachmentId}/view`);
 }

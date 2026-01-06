@@ -11,13 +11,11 @@ import java.util.Optional;
 public interface AssignmentSubmissionRepository
         extends JpaRepository<AssignmentSubmission, Long> {
 
-    // one submission per student per assignment
     Optional<AssignmentSubmission> findByAnnouncementAndStudent(
             Announcement announcement,
             User student
     );
 
-    // teacher views all submissions for an assignment
     List<AssignmentSubmission> findByAnnouncement(
             Announcement announcement
     );

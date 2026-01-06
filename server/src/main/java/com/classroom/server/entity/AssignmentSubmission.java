@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -22,7 +23,6 @@ public class AssignmentSubmission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Assignment = Announcement with type ASSIGNMENT
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "announcement_id", nullable = false)
     private Announcement announcement;
@@ -31,23 +31,25 @@ public class AssignmentSubmission {
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;               // optional
-
-    @Column(name = "submission_file_path")
-    private String submissionFilePath;    // optional
+    // multiple files
+    @OneToMany(
+            mappedBy = "submission",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<AssignmentSubmissionFile> files;
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
 
     @Column(length = 50)
-    private String grade;                 // optional
+    private String grade;
 
     @Column(columnDefinition = "TEXT")
-    private String feedback;              // optional
+    private String feedback;
 
     @PrePersist
-    public void onSubmit() {
+    void onSubmit() {
         this.submittedAt = LocalDateTime.now();
     }
 }

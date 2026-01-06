@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class CreateCommentRequest {
-    private Long userId;   // TEMP → removed after JWT
+    private Long userId;
     private String content;
 }

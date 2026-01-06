@@ -29,8 +29,6 @@ function AnnouncementForm({ students = [], onSubmit, onCancel }) {
     });
 
     onSubmit(formData);
-
-    // reset
     setTitle("");
     setContent("");
     setType("NORMAL");
@@ -42,8 +40,6 @@ function AnnouncementForm({ students = [], onSubmit, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="border rounded p-4 space-y-4">
       <h2 className="font-semibold">Create Announcement</h2>
-
-      {/* Title */}
       <input
         type="text"
         placeholder="Title"
@@ -53,7 +49,7 @@ function AnnouncementForm({ students = [], onSubmit, onCancel }) {
         required
       />
 
-      {/* Recipient filter */}
+      {/* filter */}
       <div>
         <p className="text-sm font-medium mb-2">Visible To</p>
 
@@ -99,7 +95,7 @@ function AnnouncementForm({ students = [], onSubmit, onCancel }) {
         onChange={(e) => setContent(e.target.value)}
       />
 
-      {/* File upload */}
+      {/* upload */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <label
@@ -181,7 +177,7 @@ function AnnouncementForm({ students = [], onSubmit, onCancel }) {
         />
       )}
 
-      {/* Actions */}
+      {/* Post/Cancel */}
       <div className="flex gap-3">
         <button
           type="submit"

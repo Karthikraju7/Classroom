@@ -10,17 +10,12 @@ import java.util.List;
 
 public interface AttachmentService {
 
-    // INTERNAL use only (called from AnnouncementService)
     void saveAttachments(
             Announcement announcement,
             List<MultipartFile> files
     );
-
-    // Stream file for viewing/downloading
     Resource loadAttachment(Long attachmentId);
 
     Attachment getAttachment(Long attachmentId, User requester);
-
-    // Used when loading announcement details
     List<Attachment> getAttachmentsForAnnouncement(Announcement announcement);
 }

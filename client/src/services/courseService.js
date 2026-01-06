@@ -1,6 +1,6 @@
 import apiFetch from "./api";
 
-// Create a course (teacher)
+// Create a course ==> teacher
 export function createCourse(data) {
   return apiFetch("/courses/create", {
     method: "POST",
@@ -8,7 +8,7 @@ export function createCourse(data) {
   });
 }
 
-// Join a course (student)
+// Join a course ==> student
 export function joinCourse(courseId, userId) {
   return apiFetch(`/courses/${courseId}/join`, {
     method: "POST",

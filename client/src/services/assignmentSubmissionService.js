@@ -1,14 +1,14 @@
 import apiFetch from "./api";
 
-// Student submits assignment (text / file later)
+// Student submits assignment
 export function submitAssignment(data) {
   return apiFetch("/assignments/submit", {
     method: "POST",
     body: data,
+    isMultipart: true,
   });
 }
-
-// Teacher views all submissions for an assignment
+// All submissions
 export function getSubmissionsByAssignment(announcementId) {
   return apiFetch(`/assignments/${announcementId}/submissions`);
 }

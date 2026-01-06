@@ -87,7 +87,7 @@ function AnnouncementCard({ announcement }) {
         className="border rounded p-4 bg-white space-y-3 cursor-pointer hover:bg-gray-50"
       >
 
-      {/* Announcement header */}
+      {/* header */}
       <div className="flex justify-between items-center">
         <h2 className="font-semibold">{announcement.title}</h2>
 
@@ -119,14 +119,12 @@ function AnnouncementCard({ announcement }) {
         </div>
       ) : null}
 
-      {/* Due date */}
       {announcement.dueDate && (
         <p className="text-sm text-red-600">
           Due: {new Date(announcement.dueDate).toLocaleString()}
         </p>
       )}
 
-      {/* Meta */}
       <p className="text-xs text-gray-400">
         Posted on {new Date(announcement.createdAt).toLocaleString()}
       </p>

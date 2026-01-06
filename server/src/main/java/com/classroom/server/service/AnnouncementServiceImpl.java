@@ -31,7 +31,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             List<MultipartFile> files
     ) {
 
-        // 🔒 Role check
         CourseMember member = courseMemberRepository
                 .findByCourseAndUser(course, author)
                 .orElseThrow(() -> new RuntimeException("User not part of course"));
@@ -40,12 +39,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             throw new RuntimeException("Only teachers can create announcements");
         }
 
-        // 📌 Assignment validation
         if (type == AnnouncementType.ASSIGNMENT && dueDate == null) {
             throw new RuntimeException("Assignment must have due date");
         }
 
-        // 📌 Core rule: text OR files must exist
         boolean hasText =
                 (title != null && !title.isBlank()) ||
                         (content != null && !content.isBlank());
@@ -56,7 +53,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             throw new RuntimeException("Announcement must have text or files");
         }
 
-        // 1️⃣ Create announcement first
+        // Create announcement first
         Announcement announcement = new Announcement();
         announcement.setCourse(course);
         announcement.setAuthor(author);
@@ -67,7 +64,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         Announcement saved = announcementRepository.save(announcement);
 
-        // 2️⃣ Save files (if any)
+        // Save files
         if (hasFiles) {
             attachmentService.saveAttachments(saved, files);
         }

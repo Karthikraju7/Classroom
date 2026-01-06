@@ -16,7 +16,6 @@
                 Long threadId
         );
 
-        // get latest message per thread (for inbox)
         Message findFirstByCourseIdAndThreadIdOrderByCreatedAtDesc(
                 Long courseId,
                 Long threadId

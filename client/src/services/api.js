@@ -36,7 +36,7 @@ async function apiFetch(
     throw new Error(errorMessage);
   }
 
-  // For file streams (PDFs, downloads)
+  // For files
   const contentType = response.headers.get("Content-Type") || "";
 
   if (contentType.includes("application/json")) {

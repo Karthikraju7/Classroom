@@ -18,10 +18,7 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Auth */}
       <Route path="/login" element={<Auth />} />
-
-      {/* Protected Home */}
       <Route
         path="/"
         element={
@@ -30,8 +27,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Protected Course context */}
       <Route
         path="/courses/:courseId/*"
         element={

@@ -32,7 +32,7 @@ public class Announcement {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    // ONLY for ASSIGNMENT type
+    // only for ASSIGNMENT type
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 

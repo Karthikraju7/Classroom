@@ -7,34 +7,31 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "attachments")
-public class Attachment {
+@Table(name = "assignment_submission_files")
+public class AssignmentSubmissionFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Many files belong to one submission
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "announcement_id", nullable = false)
-    private Announcement announcement;
+    @JoinColumn(name = "submission_id", nullable = false)
+    private AssignmentSubmission submission;
 
-    @Column(name = "file_name", nullable = false)
+    @Column(nullable = false)
     private String fileName;
 
-    @Column(name = "storage_path", nullable = false)
-    private String storagePath;
+    @Column(nullable = false)
+    private String filePath;
 
-    @Column(name = "file_type", nullable = false)
     private String fileType;
-
-    @Column(name = "file_size", nullable = false)
-    private Long fileSize;
 
     @Column(name = "uploaded_at", nullable = false)
     private LocalDateTime uploadedAt;
 
     @PrePersist
-    public void onUpload() {
+    void onUpload() {
         this.uploadedAt = LocalDateTime.now();
     }
 }

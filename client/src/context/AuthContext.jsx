@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [courses, setCourses] = useState([]); // ✅ ADD THIS
+  const [courses, setCourses] = useState([]);
 
   const login = async ({ email, password }) => {
     const data = await apiFetch("/auth/login", {
@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null);
-    setCourses([]); // ✅ clear courses
+    setCourses([]);
     localStorage.removeItem("user");
   };
 
@@ -43,8 +43,8 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
-        courses,       // ✅ EXPOSE
-        setCourses,    // ✅ EXPOSE
+        courses,      
+        setCourses,   
         isAuthenticated: !!user,
         login,
         register,

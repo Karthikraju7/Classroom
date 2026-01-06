@@ -1,6 +1,6 @@
 import apiFetch from "./api";
 
-// Create announcement (NORMAL or ASSIGNMENT)
+// Create announcement
 export function createAnnouncement(data) {
   return apiFetch("/announcements", {
     method: "POST",

@@ -19,11 +19,6 @@ public class MessageController {
     private final MessageService messageService;
     private final UserRepository userRepository;
 
-    /**
-     * Send new message OR reply
-     * - threadId == null → new thread
-     * - threadId != null → reply
-     */
     @PostMapping
     public void sendMessage(
             @PathVariable Long courseId,
@@ -36,10 +31,6 @@ public class MessageController {
         messageService.send(courseId, sender, request);
     }
 
-    /**
-     * THREAD INBOX
-     * One entry per thread (latest message)
-     */
     @GetMapping("/inbox")
     public List<MessageResponse> threadInbox(
             @PathVariable Long courseId,
@@ -51,9 +42,6 @@ public class MessageController {
         return messageService.getThreadInbox(courseId, user);
     }
 
-    /**
-     * THREAD DETAILS (main message + replies)
-     */
     @GetMapping("/thread/{threadId}")
     public List<MessageResponse> threadMessages(
             @PathVariable Long courseId,
@@ -66,9 +54,6 @@ public class MessageController {
         return messageService.getThreadMessages(courseId, threadId, user);
     }
 
-    /**
-     * Mark a message as read
-     */
     @PostMapping("/{messageId}/read")
     public void markRead(
             @PathVariable Long courseId,

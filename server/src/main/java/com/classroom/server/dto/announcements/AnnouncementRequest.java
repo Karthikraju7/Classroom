@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 public class AnnouncementRequest {
 
     private Long courseId;
-    private Long userId;          // TEMP → later from JWT
+    private Long userId;
     private AnnouncementType type;
 
-    private String title;         // nullable
-    private String content;       // nullable
-    private LocalDateTime dueDate; // only for ASSIGNMENT
+    private String title;
+    private String content;
+    private LocalDateTime dueDate;
 }

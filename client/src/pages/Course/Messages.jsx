@@ -49,7 +49,7 @@ function Messages() {
   }, [courseId]);
 
   async function fetchStudents() {
-    const data = await getCourseMembers(courseId); // you already have this
+    const data = await getCourseMembers(courseId);
     setStudents(data.filter(m => m.role === "STUDENT"));
   }
 
@@ -77,7 +77,7 @@ function Messages() {
 
 
 
-  // -------- THREAD SPLIT LOGIC --------
+  // Threads 
   const mainMessage = threadMessages.find(
     (m) => m.id === m.threadId
   );
@@ -128,7 +128,7 @@ function Messages() {
       )}
 
 
-      {/* ================= INBOX ================= */}
+      {/* Inbox */}
       {!activeThreadId && !showCompose && (
         <>
           {loading ? (
@@ -156,7 +156,7 @@ function Messages() {
         </>
       )}
 
-      {/* ================= THREAD VIEW ================= */}
+      {/* Total thread */}
       {activeThreadId && (
         <>
           <button
@@ -194,7 +194,7 @@ function Messages() {
         </>
       )}
 
-      {/* ================= SEND / REPLY ================= */}
+      {/* SEND / REPLY */}
       {activeThreadId && (
           <div className="border-t pt-4">
             <MessageForm

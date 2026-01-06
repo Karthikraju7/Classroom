@@ -42,10 +42,9 @@ function CourseLayoutInner() {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* TOP NAVBAR */}
+      {/* Nav */}
       <header className="h-14 flex items-center justify-between px-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          {/* HAMBURGER */}
           <button
             onClick={() => setShowSwitcher(true)}
             className="text-xl cursor-pointer"
@@ -60,8 +59,7 @@ function CourseLayoutInner() {
 
         <div className="cursor-pointer">👤</div>
       </header>
-
-      {/* COURSE SWITCHER DRAWER */}
+      
       {showSwitcher && (
         <CourseSwitcher
           courses={courses}
@@ -70,7 +68,7 @@ function CourseLayoutInner() {
         />
       )}
 
-      {/* BODY */}
+      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* SIDEBAR */}
         <aside className="w-64 border-r p-4 bg-gray-50">

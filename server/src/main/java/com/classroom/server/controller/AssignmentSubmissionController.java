@@ -25,8 +25,7 @@ public class AssignmentSubmissionController {
     public AssignmentSubmission submit(
             @RequestParam Long announcementId,
             @RequestParam Long userId,
-            @RequestParam(required = false) String content,
-            @RequestParam(required = false) MultipartFile file
+            @RequestParam("files") MultipartFile[] files
     ) {
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
@@ -34,7 +33,7 @@ public class AssignmentSubmissionController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return submissionService.submitAssignment(announcement, user, content, file);
+        return submissionService.submitAssignment(announcement, user, files);
     }
 
     @GetMapping("/{announcementId}/submissions")
