@@ -1,12 +1,18 @@
 package com.classroom.server.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(
         name = "assignment_submissions",
@@ -23,21 +29,22 @@ public class AssignmentSubmission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "announcement_id", nullable = false)
     private Announcement announcement;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
-    // multiple files
     @OneToMany(
             mappedBy = "submission",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<AssignmentSubmissionFile> files;
+    private List<AssignmentSubmissionFile> files = new ArrayList<>();
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;

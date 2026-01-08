@@ -1,11 +1,16 @@
 package com.classroom.server.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "assignment_submission_files")
 public class AssignmentSubmissionFile {
@@ -14,7 +19,7 @@ public class AssignmentSubmissionFile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Many files belong to one submission
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submission_id", nullable = false)
     private AssignmentSubmission submission;

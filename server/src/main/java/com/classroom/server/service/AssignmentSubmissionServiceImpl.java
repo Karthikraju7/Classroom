@@ -39,14 +39,18 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
                 .orElseThrow(() -> new RuntimeException("User not in course"));
 
         if (member.getRole() != CourseRole.STUDENT) {
-            throw new RuntimeException("Only students can submit assignments");
+            throw new RuntimeException("Only students can submit");
         }
 
         submissionRepository
-                .findByAnnouncementAndStudent(assignment, student)
+                .findByAnnouncement_IdAndStudent_Id(
+                        assignment.getId(),
+                        student.getId()
+                )
                 .ifPresent(s -> {
                     throw new RuntimeException("Assignment already submitted");
                 });
+
 
         if (files == null || files.length == 0) {
             throw new RuntimeException("At least one file is required");
@@ -63,26 +67,23 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
         for (MultipartFile file : files) {
             if (file.isEmpty()) continue;
 
-            String path = fileStorageService.save(
+            String path = fileStorageService.saveAssignmentSubmission(
                     file,
-                    assignment.getId()
+                    assignment.getId(),
+                    student.getId()
             );
 
-            AssignmentSubmissionFile submissionFile =
-                    new AssignmentSubmissionFile();
 
-            submissionFile.setSubmission(submission);
-            submissionFile.setFileName(file.getOriginalFilename());
-            submissionFile.setFilePath(path);
-            submissionFile.setFileType(file.getContentType());
+            AssignmentSubmissionFile f = new AssignmentSubmissionFile();
+            f.setSubmission(submission);
+            f.setFileName(file.getOriginalFilename());
+            f.setFilePath(path);
+            f.setFileType(file.getContentType());
 
-            savedFiles.add(
-                    fileRepository.save(submissionFile)
-            );
+            savedFiles.add(fileRepository.save(f));
         }
 
         submission.setFiles(savedFiles);
-
         return submission;
     }
 
@@ -131,4 +132,31 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
 
         return submissionRepository.save(submission);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AssignmentSubmission getMySubmission(
+            Announcement assignment,
+            User student
+    ) {
+        AssignmentSubmission submission =
+                submissionRepository
+                        .findByAnnouncement_IdAndStudent_Id(
+                                assignment.getId(),
+                                student.getId()
+                        )
+                        .orElse(null);
+
+        if (submission == null) {
+            return null;
+        }
+        submission.setFiles(
+                fileRepository.findBySubmission(submission)
+        );
+
+        return submission;
+    }
+
+
+
 }

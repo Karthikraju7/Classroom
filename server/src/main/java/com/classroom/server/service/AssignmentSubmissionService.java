@@ -26,4 +26,9 @@ public interface AssignmentSubmissionService {
             String grade,
             String feedback
     );
+
+    AssignmentSubmission getMySubmission(
+            Announcement assignment,
+            User student
+    );
 }

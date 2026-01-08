@@ -1,34 +1,41 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useCourse } from "../../context/CourseContext";
-import { getAnnouncementsByCourse } from "../../services/announcementService";
 import {
   submitAssignment,
   getSubmissionsByAssignment,
+  gradeSubmission,
+  getMySubmission, // ✅ MISSING IMPORT (CRITICAL)
 } from "../../services/assignmentSubmissionService";
+import { getAnnouncementsByCourse } from "../../services/announcementService";
+import { useAuth } from "../../context/AuthContext";
+import config from "../../config";
+
 
 function AssignmentDetail() {
   const { courseId, announcementId } = useParams();
   const { role } = useCourse();
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(false);
+
+
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [mySubmission, setMySubmission] = useState(null);
 
   const [activeTab, setActiveTab] = useState("INSTRUCTIONS");
   const [submissions, setSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [grade, setGrade] = useState("");
+  const [feedback, setFeedback] = useState("");
+
 
   useEffect(() => {
     loadAssignment();
   }, [announcementId]);
-
-  useEffect(() => {
-    if (role === "TEACHER") {
-      loadSubmissions();
-    }
-  }, [role]);
 
   async function loadAssignment() {
     setLoading(true);
@@ -44,30 +51,38 @@ function AssignmentDetail() {
       setLoading(false);
     }
   }
+  useEffect(() => {
+    if (role === "STUDENT" && userId && announcementId) {
+      loadMySubmission();
+    }
+  }, [role, userId, announcementId]);
 
-  async function loadSubmissions() {
+  async function loadMySubmission() {
     try {
-      const data = await getSubmissionsByAssignment(announcementId);
-      setSubmissions(data);
+      const data = await getMySubmission(announcementId, userId);
+      setMySubmission(data);
     } catch (err) {
-      console.error("Failed to load submissions", err);
+      console.error("Failed to load my submission", err);
+      setMySubmission(null);
     }
   }
 
-  // file submit
   async function handleSubmit() {
-    if (files.length === 0) return alert("Select at least one file");
+    if (files.length === 0) {
+      alert("Select at least one file");
+      return;
+    }
 
     setSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("announcementId", announcementId);
-
-      for (let file of files) {
-        formData.append("files", file);
-      }
+      formData.append("userId", userId);
+      files.forEach((f) => formData.append("files", f));
 
       await submitAssignment(formData);
+
+      await loadMySubmission();
 
       setFiles([]);
       alert("Submission successful");
@@ -76,6 +91,22 @@ function AssignmentDetail() {
       alert("Submission failed");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+
+  useEffect(() => {
+    if (role === "TEACHER" && userId) {
+      loadSubmissions();
+    }
+  }, [role, userId]);
+
+  async function loadSubmissions() {
+    try {
+      const data = await getSubmissionsByAssignment(announcementId, userId);
+      setSubmissions(data);
+    } catch (err) {
+      console.error("Failed to load submissions", err);
     }
   }
 
@@ -110,14 +141,39 @@ function AssignmentDetail() {
           <div className="w-1/4 border rounded p-4 space-y-3">
             <h2 className="font-semibold">Your work</h2>
 
+            {/* Status */}
+            {mySubmission && mySubmission.files?.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-green-600">Submitted</p>
+
+                <ul className="list-disc pl-5 text-sm">
+                  {mySubmission.files.map((f) => (
+                    <li key={f.id}>
+                      <a
+                        href={`${config.API_BASE_URL}/assignment-submissions/files/${f.id}/view`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {f.fileName}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Not submitted yet</p>
+            )}
+
+            {/* FILE */}
             <input
               type="file"
               multiple
               id="assignment-files"
               className="hidden"
               onChange={(e) => {
-                const selected = Array.from(e.target.files);
-                setFiles((prev) => [...prev, ...selected]);
+                setFiles(Array.from(e.target.files));
                 e.target.value = null;
               }}
             />
@@ -128,36 +184,6 @@ function AssignmentDetail() {
             >
               Choose files
             </label>
-
-            {files.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  {files.length} file{files.length > 1 ? "s" : ""} selected
-                </p>
-
-                <ul className="text-sm space-y-1">
-                  {files.map((file, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center justify-between border rounded px-2 py-1"
-                    >
-                      <span className="truncate">{file.name}</span>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFiles((prev) => prev.filter((_, i) => i !== index))
-                        }
-                        className="text-red-500 hover:text-red-700 text-xs"
-                      >
-                        ✕
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
 
             <button
               onClick={handleSubmit}
@@ -196,37 +222,28 @@ function AssignmentDetail() {
               Student work
             </button>
           </div>
-
-          {/* INSTRUCTIONS */}
           {activeTab === "INSTRUCTIONS" && (
-            <div className="space-y-4">
-              <h1 className="text-2xl font-semibold">{assignment.title}</h1>
+              <div className="space-y-4">
+                <h1 className="text-2xl font-semibold">{assignment.title}</h1>
 
-              {assignment.dueDate && (
-                <p className="text-red-600">
-                  Due: {new Date(assignment.dueDate).toLocaleString()}
-                </p>
-              )}
+                {assignment.dueDate && (
+                  <p className="text-red-600">
+                    Due: {new Date(assignment.dueDate).toLocaleString()}
+                  </p>
+                )}
 
-              {assignment.content && (
-                <p className="text-gray-700 whitespace-pre-line">
-                  {assignment.content}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* STUDENT WORK */}
+                {assignment.content && (
+                  <p className="text-gray-700 whitespace-pre-line">
+                    {assignment.content}
+                  </p>
+                )}
+              </div>
+            )}
           {activeTab === "STUDENT_WORK" && (
             <div className="flex gap-6">
-              {/* LEFT */}
               <div className="w-3/4 border rounded p-6">
                 {selectedSubmission ? (
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">
-                      Student submission
-                    </h2>
-
+                  <>
                     <p className="text-sm text-gray-500">
                       Submitted at{" "}
                       {new Date(
@@ -234,14 +251,15 @@ function AssignmentDetail() {
                       ).toLocaleString()}
                     </p>
 
-                    {/* FILE LIST */}
                     <ul className="list-disc pl-5 text-sm">
                       {selectedSubmission.files?.map((f) => (
                         <li key={f.id}>
                           <a
-                            href={f.filePath}
+                            href={`${config.API_BASE_URL}/assignment-submissions/files/${f.id}/view`}
                             target="_blank"
+                            rel="noopener noreferrer"
                             className="text-blue-600 underline"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {f.fileName}
                           </a>
@@ -249,25 +267,36 @@ function AssignmentDetail() {
                       ))}
                     </ul>
 
-                    {/* GRADING */}
                     <div className="pt-4 border-t space-y-2">
                       <input
-                        type="text"
+                        value={grade}
+                        onChange={(e) => setGrade(e.target.value)}
                         placeholder="Grade"
-                        className="border rounded px-3 py-2 w-32"
+                        className="border px-3 py-2 w-32"
                       />
-
                       <textarea
-                        rows={3}
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
                         placeholder="Feedback"
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border px-3 py-2"
                       />
-
-                      <button className="px-4 py-2 bg-green-600 text-white rounded">
+                      <button
+                        onClick={async () => {
+                          await gradeSubmission(
+                            selectedSubmission.id,
+                            userId,
+                            grade,
+                            feedback
+                          );
+                          await loadSubmissions();
+                          alert("Grade saved");
+                        }}
+                        className="bg-green-600 text-white px-4 py-2 rounded"
+                      >
                         Save
                       </button>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <p className="text-gray-500">
                     Select a student to view submission
@@ -275,27 +304,20 @@ function AssignmentDetail() {
                 )}
               </div>
 
-              {/* RIGHT */}
-              <div className="w-1/4 border rounded p-4 space-y-3">
-                <h2 className="font-semibold">Students</h2>
-
-                {submissions.length === 0 ? (
-                  <p className="text-sm text-gray-500">No submissions yet</p>
-                ) : (
-                  submissions.map((s) => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedSubmission(s)}
-                      className={`cursor-pointer rounded px-3 py-2 text-sm ${
-                        selectedSubmission?.id === s.id
-                          ? "bg-blue-100"
-                          : "hover:bg-gray-100"
-                      }`}
-                    >
-                      Student
-                    </div>
-                  ))
-                )}
+              <div className="w-1/4 border rounded p-4">
+                {submissions.map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => setSelectedSubmission(s)}
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      selectedSubmission?.id === s.id
+                        ? "bg-blue-100"
+                        : "hover:bg-gray-100"
+                    }`}
+                  >
+                    {s.studentName}
+                  </div>
+                ))}
               </div>
             </div>
           )}

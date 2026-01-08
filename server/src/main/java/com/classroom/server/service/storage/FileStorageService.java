@@ -7,5 +7,11 @@ public interface FileStorageService {
 
     String save(MultipartFile file, Long announcementId);
 
+    String saveAssignmentSubmission(
+            MultipartFile file,
+            Long assignmentId,
+            Long studentId
+    );
+
     Resource load(String storagePath);
 }

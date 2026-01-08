@@ -11,9 +11,9 @@ import java.util.Optional;
 public interface AssignmentSubmissionRepository
         extends JpaRepository<AssignmentSubmission, Long> {
 
-    Optional<AssignmentSubmission> findByAnnouncementAndStudent(
-            Announcement announcement,
-            User student
+    Optional<AssignmentSubmission> findByAnnouncement_IdAndStudent_Id(
+            Long announcementId,
+            Long studentId
     );
 
     List<AssignmentSubmission> findByAnnouncement(

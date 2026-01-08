@@ -21,7 +21,6 @@ public class LocalFileStorageService implements FileStorageService {
     @Override
     public String save(MultipartFile file, Long announcementId) {
         try {
-            // storage/announcements/{announcementId}/
             Path dirPath = Path.of(
                     rootDir,
                     "announcements",
@@ -30,7 +29,9 @@ public class LocalFileStorageService implements FileStorageService {
 
             Files.createDirectories(dirPath);
 
-            String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
+            String fileName =
+                    UUID.randomUUID() + "-" + file.getOriginalFilename();
+
             Path filePath = dirPath.resolve(fileName);
 
             Files.copy(
@@ -39,15 +40,59 @@ public class LocalFileStorageService implements FileStorageService {
                     StandardCopyOption.REPLACE_EXISTING
             );
 
-            return filePath.toString(); // stored in DB
+            return "announcements/"
+                    + announcementId + "/"
+                    + fileName;
+
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            throw new RuntimeException("Failed to store announcement file", e);
+        }
+    }
+
+
+    @Override
+    public String saveAssignmentSubmission(
+            MultipartFile file,
+            Long assignmentId,
+            Long studentId
+    ) {
+        try {
+            Path dirPath = Path.of(
+                    rootDir,
+                    "assignment-submissions",
+                    assignmentId.toString(),
+                    studentId.toString()
+            );
+
+
+            Files.createDirectories(dirPath);
+
+            String fileName =
+                    UUID.randomUUID() + "-" + file.getOriginalFilename();
+
+            Path filePath = dirPath.resolve(fileName);
+
+            Files.copy(
+                    file.getInputStream(),
+                    filePath,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            return "assignment-submissions/"
+                    + assignmentId + "/"
+                    + studentId + "/"
+                    + fileName;
+
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Failed to store assignment submission file", e
+            );
         }
     }
 
     @Override
     public Resource load(String storagePath) {
-        Path path = Path.of(storagePath);
+        Path path = Path.of(rootDir, storagePath);
 
         if (!Files.exists(path)) {
             throw new RuntimeException("File not found on disk");
