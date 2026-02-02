@@ -4,7 +4,7 @@ A **full-stack classroom management system** designed with **per-course role iso
 Built using **Spring Boot, MySQL, React, Tailwind CSS, and JWT authentication**.
 
 **Main Aim:**  
-To simulate real classroom workflows where a single user can act as a **Teacher in one course and a Student in another**, without leaking permissions or data.
+To simulate real classroom workflows where a single user can act as a **Teacher in one course and a Student in another**.
 
 ---
 
