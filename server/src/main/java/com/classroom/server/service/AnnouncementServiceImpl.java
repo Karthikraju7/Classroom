@@ -62,7 +62,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         announcement.setContent(content);
         announcement.setDueDate(type == AnnouncementType.ASSIGNMENT ? dueDate : null);
 
-        Announcement saved = announcementRepository.save(announcement);
+        Announcement saved = announcementRepository.saveAndFlush(announcement);
 
         // Save files
         if (hasFiles) {

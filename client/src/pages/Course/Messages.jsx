@@ -15,7 +15,7 @@ import MessageForm from "../../components/message/MessageForm";
 function Messages() {
   const { courseId } = useParams();
   const { role } = useCourse();
-  const { user } = useAuth(); // TEMP auth
+  const { user } = useAuth();
   const userId = user.id;
   const currentUserName = user.name;
   const [threads, setThreads] = useState([]);
@@ -24,7 +24,6 @@ function Messages() {
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState([]);
   const [showCompose, setShowCompose] = useState(false);
-
 
   useEffect(() => {
     loadInbox();
@@ -53,7 +52,6 @@ function Messages() {
     setStudents(data.filter(m => m.role === "STUDENT"));
   }
 
-
   async function openThread(threadId) {
     setActiveThreadId(threadId);
     try {
@@ -75,42 +73,59 @@ function Messages() {
     openThread(activeThreadId);
   }
 
-
-
-  // Threads 
-  const mainMessage = threadMessages.find(
-    (m) => m.id === m.threadId
-  );
-
+  // Threads
+  const mainMessage = threadMessages.find((m) => m.id === m.threadId);
   const replies = threadMessages
     .filter((m) => m.id !== m.threadId)
-    .sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-    );
-
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold">Messages</h1>
+    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", maxWidth: "760px", margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+        <div>
+          <h1 style={{ fontSize: "20px", fontWeight: "600", color: "#1a1d23", margin: 0, letterSpacing: "-0.3px" }}>
+            {activeThreadId ? "Thread" : "Messages"}
+          </h1>
+          <p style={{ fontSize: "13px", color: "#6b7280", margin: "4px 0 0" }}>
+            {activeThreadId
+              ? "You are viewing a thread"
+              : role === "STUDENT"
+                ? "You can message only the instructor."
+                : "Messages are private and sent individually."}
+          </p>
+        </div>
 
-        {role === "TEACHER" && !activeThreadId && (
+        {role === "TEACHER" && !activeThreadId && !showCompose && (
           <button
             onClick={() => setShowCompose(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm cursor-pointer"
+            style={{
+              padding: "8px 18px",
+              backgroundColor: "#2d5be3",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: "500",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = "#2349c4"}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = "#2d5be3"}
           >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
             New Message
           </button>
         )}
       </div>
-      <p className="text-sm text-gray-600">
-        {role === "STUDENT"
-          ? "You can message only the instructor."
-          : "Messages are private and sent individually."}
-      </p>
 
+      {/* Compose form */}
       {showCompose && (
-        <div className="border rounded p-4 space-y-3">
+        <div style={{ marginTop: "20px" }}>
           <MessageForm
             students={students}
             onSend={async ({ content, recipientIds }) => {
@@ -127,60 +142,100 @@ function Messages() {
         </div>
       )}
 
-
-      {/* Inbox */}
+      {/* Inbox list */}
       {!activeThreadId && !showCompose && (
-        <>
+        <div style={{ marginTop: "20px" }}>
           {loading ? (
-            <p className="text-gray-500">Loading…</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "72px 0" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <div style={{
+                  width: "18px", height: "18px", border: "2.5px solid #e2e6ea",
+                  borderTopColor: "#2d5be3", borderRadius: "50%",
+                  animation: "spin 0.6s linear infinite",
+                }} />
+                <span style={{ fontSize: "14px", color: "#6b7280" }}>Loading messages...</span>
+              </div>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
           ) : threads.length === 0 ? (
-            <p className="text-gray-500">No messages yet</p>
+            <div style={{
+              textAlign: "center",
+              padding: "72px 20px",
+              backgroundColor: "#ffffff",
+              borderRadius: "10px",
+              border: "1px solid #e2e6ea",
+            }}>
+              <div style={{
+                width: "48px", height: "48px", borderRadius: "12px",
+                backgroundColor: "#eef2fc", display: "flex",
+                alignItems: "center", justifyContent: "center", margin: "0 auto 16px",
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2d5be3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <p style={{ fontSize: "15px", fontWeight: "600", color: "#1a1d23", margin: "0 0 6px" }}>No messages yet</p>
+              <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
+                {role === "TEACHER" ? "Send a new message to a student to get started." : "Your instructor hasn't sent you any messages yet."}
+              </p>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {threads.map((t) => {
-                  const isMain = t.id === t.threadId;
-
-                  return (
-                    <MessageItem
-                      message={t}
-                      currentUserId={userId}
-                      currentUserName={currentUserName}
-                      isThread
-                      isInbox
-                      onOpen={() => openThread(t.threadId)}
-                    />
-                  );
-              })}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {threads.map((t) => (
+                <MessageItem
+                  key={t.id}
+                  message={t}
+                  currentUserId={userId}
+                  currentUserName={currentUserName}
+                  isThread
+                  isInbox
+                  onOpen={() => openThread(t.threadId)}
+                />
+              ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
-      {/* Total thread */}
+      {/* Thread view */}
       {activeThreadId && (
-        <>
+        <div style={{ marginTop: "20px" }}>
+          {/* Back button */}
           <button
-            className="text-sm text-blue-600 cursor-pointer"
-            onClick={() => {
-              setActiveThreadId(null);
-              setThreadMessages([]);
+            onClick={() => { setActiveThreadId(null); setThreadMessages([]); }}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#2d5be3",
+              fontSize: "13px",
+              fontWeight: "500",
+              cursor: "pointer",
+              padding: "0 0 16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
             }}
+            onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+            onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
           >
-            ← Back to inbox
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Back to inbox
           </button>
 
-          <div className="space-y-4">
-            {/* Main message */}
-            {mainMessage && (
-              <MessageItem
-                message={mainMessage}
-                currentUserId={userId}
-                currentUserName={currentUserName}
-                isMain
-              />
-            )}
+          {/* Main message */}
+          {mainMessage && (
+            <MessageItem
+              message={mainMessage}
+              currentUserId={userId}
+              currentUserName={currentUserName}
+              isMain
+            />
+          )}
 
-            {/* Replies */}
+          {/* Replies */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
             {replies.map((m) => (
               <MessageItem
                 key={m.id}
@@ -191,18 +246,13 @@ function Messages() {
               />
             ))}
           </div>
-        </>
-      )}
 
-      {/* SEND / REPLY */}
-      {activeThreadId && (
-          <div className="border-t pt-4">
-            <MessageForm
-              isReply
-              onSend={handleSend}
-            />
+          {/* Reply form */}
+          <div style={{ borderTop: "1px solid #e2e6ea", marginTop: "20px", paddingTop: "18px" }}>
+            <MessageForm isReply onSend={handleSend} />
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

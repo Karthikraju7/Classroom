@@ -33,6 +33,7 @@ public class AssignmentSubmissionController {
             @RequestParam Long userId,
             @RequestParam("files") MultipartFile[] files
     ) {
+
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
 
@@ -54,6 +55,7 @@ public class AssignmentSubmissionController {
             @PathVariable Long announcementId,
             @RequestParam Long userId
     ) {
+
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
 
@@ -72,6 +74,7 @@ public class AssignmentSubmissionController {
             @PathVariable Long announcementId,
             @RequestParam Long userId
     ) {
+
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
 
@@ -81,14 +84,8 @@ public class AssignmentSubmissionController {
         AssignmentSubmission submission =
                 submissionService.getMySubmission(announcement, user);
 
-        if (submission == null) {
-            return null;
-        }
-
-        return map(submission);
+        return submission == null ? null : map(submission);
     }
-
-
 
     @PutMapping("/submissions/{submissionId}/grade")
     public AssignmentSubmissionResponse grade(
@@ -97,6 +94,7 @@ public class AssignmentSubmissionController {
             @RequestParam String grade,
             @RequestParam(required = false) String feedback
     ) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -111,7 +109,6 @@ public class AssignmentSubmissionController {
         return map(submission);
     }
 
-
     private AssignmentSubmissionResponse map(AssignmentSubmission s) {
         return new AssignmentSubmissionResponse(
                 s.getId(),
@@ -120,7 +117,6 @@ public class AssignmentSubmissionController {
                 s.getFeedback(),
                 s.getStudent().getId(),
                 s.getStudent().getName(),
-
                 s.getFiles().stream()
                         .map(f -> new SubmissionFileResponse(
                                 f.getId(),
@@ -130,5 +126,4 @@ public class AssignmentSubmissionController {
                         .toList()
         );
     }
-
 }

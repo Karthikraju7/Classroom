@@ -10,5 +10,6 @@ public interface AssignmentSubmissionFileRepository
         extends JpaRepository<AssignmentSubmissionFile, Long> {
 
     List<AssignmentSubmissionFile> findBySubmission(AssignmentSubmission submission);
-}
 
+    void deleteBySubmission(AssignmentSubmission submission);
+}

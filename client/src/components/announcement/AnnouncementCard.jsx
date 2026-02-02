@@ -1,15 +1,5 @@
-import { useEffect, useState } from "react";
-import {
-  getCommentsByAnnouncement,
-  createComment,
-} from "../../services/commentService";
-import CommentList from "./CommentList";
-import CommentForm from "./CommentForm";
-import { useAuth } from "../../context/AuthContext";
-import { getAttachmentsByAnnouncement } from "../../services/attachmentService";
-import AttachmentItem from "../../components/attachment/AttachmentItem";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 
 function AnnouncementCard({ announcement }) {
   function getPreview(text, limit = 150) {
@@ -17,17 +7,10 @@ function AnnouncementCard({ announcement }) {
     if (text.length <= limit) return text;
     return text.slice(0, limit) + "...";
   }
-  const [comments, setComments] = useState([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [attachments, setAttachments] = useState([]);
-  const [loadingAttachments, setLoadingAttachments] = useState(false);
-  const { user } = useAuth();
-  const [showAllComments, setShowAllComments] = useState(false);
-  const visibleComments = showAllComments
-                          ? comments
-                          : comments.slice(0, 1);
+
   const navigate = useNavigate();
   const { courseId } = useParams();
+  const [hovered, setHovered] = useState(false);
 
   function openDetail() {
     if (announcement.type === "ASSIGNMENT") {
@@ -37,122 +20,90 @@ function AnnouncementCard({ announcement }) {
     }
   }
 
-
-
-  useEffect(() => {
-    loadComments();
-    loadAttachments();
-  }, [announcement.id]);
-
-  async function loadComments() {
-    setLoadingComments(true);
-    try {
-      const data = await getCommentsByAnnouncement(announcement.id);
-      setComments([...data].reverse());
-    } catch (err) {
-      console.error("Failed to load comments", err);
-    } finally {
-      setLoadingComments(false);
-    }
-  }
-
-  async function loadAttachments() {
-    setLoadingAttachments(true);
-    try {
-      const data = await getAttachmentsByAnnouncement(announcement.id);
-      setAttachments(data);
-    } catch (err) {
-      console.error("Failed to load attachments", err);
-    } finally {
-      setLoadingAttachments(false);
-    }
-  }
-
-
-  async function handleAddComment(content) {
-  try {
-    await createComment(announcement.id, {
-      userId: user.id,
-      content,
-    });
-    loadComments();
-    } catch (err) {
-      console.error("Failed to add comment", err);
-    }
-  }
+  const isAssignment = announcement.type === "ASSIGNMENT";
 
   return (
     <div
-        onClick={openDetail}
-        className="border rounded p-4 bg-white space-y-3 cursor-pointer hover:bg-gray-50"
-      >
+      onClick={openDetail}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        backgroundColor: "#ffffff",
+        border: `1px solid ${hovered ? "#2d5be3" : "#e2e6ea"}`,
+        borderRadius: "10px",
+        padding: "20px 22px",
+        cursor: "pointer",
+        transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+        boxShadow: hovered ? "0 4px 12px rgba(45, 91, 227, 0.1)" : "0 1px 3px rgba(0,0,0,0.04)",
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: announcement.content ? "10px" : "0" }}>
+        <h2 style={{
+          fontSize: "15px",
+          fontWeight: "600",
+          color: "#1a1d23",
+          margin: 0,
+          letterSpacing: "-0.2px",
+        }}>
+          {announcement.title}
+        </h2>
 
-      {/* header */}
-      <div className="flex justify-between items-center">
-        <h2 className="font-semibold">{announcement.title}</h2>
-
-        {announcement.type === "ASSIGNMENT" && (
-          <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded">
+        {isAssignment && (
+          <span style={{
+            fontSize: "11.5px",
+            fontWeight: "600",
+            color: "#d97706",
+            backgroundColor: "#fef3c7",
+            padding: "3px 10px",
+            borderRadius: "20px",
+            textTransform: "uppercase",
+            letterSpacing: "0.4px",
+            whiteSpace: "nowrap",
+          }}>
             Assignment
           </span>
         )}
       </div>
 
-      {/* Content */}
+      {/* Content preview */}
       {announcement.content && (
-        <p className="text-gray-700">
+        <p style={{ fontSize: "13.5px", color: "#4b5563", margin: "0 0 12px", lineHeight: "1.55" }}>
           {getPreview(announcement.content)}
         </p>
       )}
 
-
-      {loadingAttachments ? (
-        <p className="text-sm text-gray-500">Loading attachments...</p>
-      ) : attachments.length > 0 ? (
-        <div
-          className="space-y-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {attachments.map((att) => (
-            <AttachmentItem key={att.id} attachment={att} />
-          ))}
-        </div>
-      ) : null}
-
+      {/* Due date */}
       {announcement.dueDate && (
-        <p className="text-sm text-red-600">
-          Due: {new Date(announcement.dueDate).toLocaleString()}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <p style={{ fontSize: "12.5px", color: "#dc2626", fontWeight: "500", margin: 0 }}>
+            Due: {new Date(announcement.dueDate).toLocaleString()}
+          </p>
+        </div>
       )}
 
-      <p className="text-xs text-gray-400">
-        Posted on {new Date(announcement.createdAt).toLocaleString()}
-      </p>
+      {/* Footer row: posted date */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
+        <p style={{ fontSize: "11.5px", color: "#9ca3af", margin: 0 }}>
+          Posted on {new Date(announcement.createdAt).toLocaleString()}
+        </p>
 
-      {/* Comments */}
-      <div
-        className="pt-3 border-t space-y-2"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <CommentForm onSubmit={handleAddComment} />
-        {loadingComments ? (
-          <p className="text-sm text-gray-500">Loading comments...</p>
-        ) : (
-          <>
-            <CommentList comments={visibleComments} />
-
-            {comments.length > 1 && (
-              <button
-                onClick={() => setShowAllComments(!showAllComments)}
-                className="text-sm text-blue-600 hover:underline cursor-pointer"
-              >
-                {showAllComments
-                  ? "Hide comments"
-                  : `View all comments (${comments.length})`}
-              </button>
-            )}
-          </>
-        )}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          opacity: hovered ? 1 : 0.3,
+          transition: "opacity 0.2s ease",
+        }}>
+          <span style={{ fontSize: "12px", color: "#2d5be3", fontWeight: "500", marginRight: "4px" }}>
+            {isAssignment ? "Open assignment" : "Open announcement"}
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2d5be3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
       </div>
     </div>
   );

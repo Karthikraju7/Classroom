@@ -56,7 +56,7 @@ public class AssignmentSubmission {
     private String feedback;
 
     @PrePersist
-    void onSubmit() {
+    public void onSubmit() {
         this.submittedAt = LocalDateTime.now();
     }
 }

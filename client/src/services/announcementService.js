@@ -5,6 +5,7 @@ export function createAnnouncement(data) {
   return apiFetch("/announcements", {
     method: "POST",
     body: data,
+    isMultipart: true, 
   });
 }
 

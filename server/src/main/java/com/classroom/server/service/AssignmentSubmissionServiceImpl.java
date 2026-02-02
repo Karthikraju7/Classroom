@@ -34,6 +34,15 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
             throw new RuntimeException("Not an assignment");
         }
 
+        if (assignment.getDueDate() != null &&
+                assignment.getDueDate().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Assignment deadline has passed");
+        }
+
+        if (files == null || files.length == 0) {
+            throw new RuntimeException("At least one file is required");
+        }
+
         CourseMember member = courseMemberRepository
                 .findByCourseAndUser(assignment.getCourse(), student)
                 .orElseThrow(() -> new RuntimeException("User not in course"));
@@ -42,50 +51,47 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
             throw new RuntimeException("Only students can submit");
         }
 
-        submissionRepository
-                .findByAnnouncement_IdAndStudent_Id(
-                        assignment.getId(),
-                        student.getId()
-                )
-                .ifPresent(s -> {
-                    throw new RuntimeException("Assignment already submitted");
-                });
+        // allow resubmission
+        AssignmentSubmission submission =
+                submissionRepository
+                        .findByAnnouncement_IdAndStudent_Id(
+                                assignment.getId(),
+                                student.getId()
+                        )
+                        .orElse(new AssignmentSubmission());
 
-
-        if (files == null || files.length == 0) {
-            throw new RuntimeException("At least one file is required");
-        }
-
-        AssignmentSubmission submission = new AssignmentSubmission();
         submission.setAnnouncement(assignment);
         submission.setStudent(student);
+        submission.setSubmittedAt(java.time.LocalDateTime.now());
 
         submission = submissionRepository.save(submission);
+        submission.getFiles().clear();
 
-        List<AssignmentSubmissionFile> savedFiles = new ArrayList<>();
+        try {
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
 
-        for (MultipartFile file : files) {
-            if (file.isEmpty()) continue;
+                String path = fileStorageService.saveAssignmentSubmission(
+                        file,
+                        assignment.getId(),
+                        student.getId()
+                );
 
-            String path = fileStorageService.saveAssignmentSubmission(
-                    file,
-                    assignment.getId(),
-                    student.getId()
-            );
+                AssignmentSubmissionFile f = new AssignmentSubmissionFile();
+                f.setSubmission(submission);
+                f.setFileName(file.getOriginalFilename());
+                f.setFilePath(path);
+                f.setFileType(file.getContentType());
 
-
-            AssignmentSubmissionFile f = new AssignmentSubmissionFile();
-            f.setSubmission(submission);
-            f.setFileName(file.getOriginalFilename());
-            f.setFilePath(path);
-            f.setFileType(file.getContentType());
-
-            savedFiles.add(fileRepository.save(f));
+                submission.getFiles().add(f);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("File upload failed", e);
         }
 
-        submission.setFiles(savedFiles);
         return submission;
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -102,7 +108,15 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
             throw new RuntimeException("Only teachers can view submissions");
         }
 
-        return submissionRepository.findByAnnouncement(assignment);
+        List<AssignmentSubmission> submissions =
+                submissionRepository.findByAnnouncement(assignment);
+
+        //load files for teacher view
+        submissions.forEach(s ->
+                s.setFiles(fileRepository.findBySubmission(s))
+        );
+
+        return submissions;
     }
 
     @Override
@@ -139,6 +153,7 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
             Announcement assignment,
             User student
     ) {
+
         AssignmentSubmission submission =
                 submissionRepository
                         .findByAnnouncement_IdAndStudent_Id(
@@ -150,13 +165,11 @@ public class AssignmentSubmissionServiceImpl implements AssignmentSubmissionServ
         if (submission == null) {
             return null;
         }
+
         submission.setFiles(
                 fileRepository.findBySubmission(submission)
         );
 
         return submission;
     }
-
-
-
 }
