@@ -74,7 +74,3 @@ To simulate real classroom workflows where a single user can act as a **Teacher 
   cd client
   npm install
   npm run dev
-  
-## 📷 Screenshots
-
-Check out all the screenshots in the [Classroom_ScreenShots folder](Classroom_ScreenShots/) here.
