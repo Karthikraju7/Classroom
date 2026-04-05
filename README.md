@@ -1,40 +1,63 @@
-# 📚 Classroom Management Platform
-
-A **full-stack classroom management system** designed with **per-course role isolation**, scalable domain modeling, and strict backend-enforced access control.  
-Built using **Spring Boot, MySQL, React, Tailwind CSS, and JWT authentication**.
-
-**Main Aim:**  
-To simulate real classroom workflows where a single user can act as a **Teacher in one course and a Student in another**.
-
----
-
 ## 🚀 Features
 
 ### 🔐 Per-Course Role Isolation
-- A single user can have different roles across different courses
-- All permissions are enforced at the backend level
-- Prevents cross-course and cross-role data access
+- A single user can act as:
+  - 👨‍🏫 Teacher in one course
+  - 🎓 Student in another
+- All permissions enforced at backend level
+- Prevents cross-course and cross-role access
+
+---
 
 ### 📢 Announcement-Centric Design
-- Announcements are designed as the **core entity**
+- Announcements act as the **core entity**
 - Assignments and attachments are derived as **filtered views**
-- Keeps the system flexible and scalable as features grow
+- Scalable architecture for future features
+
+---
 
 ### 📝 Assignment Workflow
 - Assignment creation with due dates
 - One-to-one student submissions
-- Teacher feedback on submissions
-- Backend-enforced submission and deadline rules
+- Teacher grading & feedback
+- Deadline enforcement from backend
+
+---
 
 ### 💬 Private Messaging System
-- Strict role-based private messaging
-- Teachers can message multiple students
-- Students can privately contact instructors
-- No unauthorized access between roles
+- Role-based messaging system
+- Teacher ↔ Students communication
+- Secure and restricted access
+
+---
+
+### 🎥 Live Classroom (WebRTC) ⭐ NEW
+- Real-time video sessions using **WebRTC**
+- WebSocket signaling via **STOMP + SockJS**
+- Teacher-controlled live sessions
+- Students join via room-based sessions
+
+#### 🔁 Flow:
+1. Student joins session
+2. Teacher sends WebRTC offer
+3. Student responds with answer
+4. ICE candidates exchanged
+5. Peer-to-peer video connection established
+
+#### ⚙️ Features:
+- Live video/audio streaming
+- Participant tracking
+- Teacher-only **End Session**
+- Safe handling of:
+  - connection lifecycle
+  - signaling states
+  - camera/mic permissions
+
+---
 
 ### 🔑 Secure Authentication
 - JWT-based authentication
-- APIs protected using Spring Security
+- Spring Security protected APIs
 
 ---
 
@@ -43,8 +66,19 @@ To simulate real classroom workflows where a single user can act as a **Teacher 
 - **Frontend:** React, Tailwind CSS  
 - **Backend:** Spring Boot  
 - **Database:** MySQL  
+- **Realtime:** WebRTC, WebSocket (STOMP + SockJS)  
 - **Authentication:** JWT  
 - **Tools:** Postman  
+
+---
+
+## 🧠 System Design Highlights
+
+- Clean separation of concerns
+- Backend-driven authorization
+- Real-time communication using WebRTC
+- Scalable entity relationships
+- Production-ready architecture patterns
 
 ---
 
