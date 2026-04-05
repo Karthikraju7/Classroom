@@ -82,6 +82,12 @@ public class CourseServiceImpl implements CourseService {
         );
     }
 
+    @Override
+    public Course getCourseEntityById(Long courseId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+    }
+
 
     @Override
     @Transactional(readOnly = true)

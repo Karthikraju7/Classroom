@@ -1,11 +1,13 @@
-import { useParams, NavLink, Routes, Route } from "react-router-dom";
+import { useParams, NavLink, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CourseProvider, useCourse } from "../../context/CourseContext";
 import { getCourseById } from "../../services/courseService";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { getActiveSession, startLiveClass } from "../../services/liveService";
+import LiveClass from "./LiveClass";
 
 import CourseSwitcher from "../../components/course/CourseSwitcher";
-
 import Announcements from "./Announcements";
 import Attachments from "./Attachments";
 import Assignments from "./Assignments";
@@ -64,9 +66,12 @@ const NAV_ITEMS = [
 
 function CourseLayoutInner() {
   const { courseId } = useParams();
+  const location = useLocation();
   const { setActiveCourse, setRole, activeCourse } = useCourse();
   const { user, courses } = useAuth();
   const [showSwitcher, setShowSwitcher] = useState(false);
+  const [liveSession, setLiveSession] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadCourse() {
@@ -74,15 +79,36 @@ function CourseLayoutInner() {
         const data = await getCourseById(courseId, user.id);
         setActiveCourse(data);
         setRole(data.role);
+        const session = await getActiveSession(courseId);
+        setLiveSession(session);
       } catch (err) {
         console.error("Failed to load course", err);
       }
     }
-
-    if (user && courseId) {
-      loadCourse();
-    }
+    if (user && courseId) loadCourse();
   }, [courseId, user]);
+
+  // When user navigates away from the live route (after leave/end), re-check
+  // whether the session is still active so the banner stays accurate.
+  const isOnLiveRoute = location.pathname.includes("/live/");
+  useEffect(() => {
+    if (!isOnLiveRoute && user && courseId) {
+      getActiveSession(courseId)
+        .then((s) => setLiveSession(s))
+        .catch(() => setLiveSession(null));
+    }
+  }, [isOnLiveRoute, courseId, user]);
+
+  const handleStartLive = async () => {
+    const session = await startLiveClass(courseId, user.id);
+    setLiveSession(session);
+  };
+
+  const handleJoinLive = () => {
+    if (liveSession?.roomId) {
+      navigate(`/courses/${courseId}/live/${liveSession.roomId}`);
+    }
+  };
 
   if (!activeCourse) {
     return (
@@ -93,7 +119,9 @@ function CourseLayoutInner() {
             borderTopColor: "#2d5be3", borderRadius: "50%",
             animation: "spin 0.6s linear infinite",
           }} />
-          <span style={{ fontSize: "14px", color: "#6b7280", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>Loading course...</span>
+          <span style={{ fontSize: "14px", color: "#6b7280", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+            Loading course...
+          </span>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -102,7 +130,8 @@ function CourseLayoutInner() {
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
-      {/* Top header */}
+
+      {/* ── Top header ── */}
       <header style={{
         height: "56px",
         display: "flex",
@@ -114,21 +143,10 @@ function CourseLayoutInner() {
         flexShrink: 0,
         zIndex: 10,
       }}>
-        {/* Left: hamburger + course name */}
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <button
             onClick={() => setShowSwitcher(true)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px",
-              borderRadius: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#6b7280",
-            }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f3f4f6"; e.currentTarget.style.color = "#1a1d23"; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6b7280"; }}
           >
@@ -138,12 +156,7 @@ function CourseLayoutInner() {
           </button>
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "30px", height: "30px",
-              backgroundColor: "#2d5be3",
-              borderRadius: "7px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
+            <div style={{ width: "30px", height: "30px", backgroundColor: "#2d5be3", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-1H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-1h7z"/>
               </svg>
@@ -153,62 +166,71 @@ function CourseLayoutInner() {
             </span>
           </div>
         </div>
+
+        {activeCourse?.role === "TEACHER" && !liveSession && (
+          <button
+            onClick={handleStartLive}
+            style={{ backgroundColor: "#2d5be3", color: "white", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}
+          >
+            Start Live Class
+          </button>
+        )}
       </header>
 
-      {/* CourseSwitcher drawer */}
-      {showSwitcher && (
-        <CourseSwitcher
-          courses={courses}
-          currentCourseId={Number(courseId)}
-          onClose={() => setShowSwitcher(false)}
-        />
+      {/* ── Live session banner ── */}
+      {liveSession && !isOnLiveRoute && (
+        <div style={{ backgroundColor: "#16a34a", color: "white", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: "500" }}>
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#bbf7d0", display: "inline-block", animation: "pulse 2s infinite" }} />
+            Live Class is Ongoing
+          </span>
+          <button
+            onClick={handleJoinLive}
+            style={{ backgroundColor: "white", color: "#16a34a", border: "none", padding: "6px 14px", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}
+          >
+            Join Now
+          </button>
+        </div>
       )}
 
-      {/* Body: sidebar + main */}
+      {showSwitcher && (
+        <CourseSwitcher courses={courses} currentCourseId={Number(courseId)} onClose={() => setShowSwitcher(false)} />
+      )}
+
+      {/* ── Body ── */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Sidebar */}
-        <aside style={{
-          width: "230px",
-          flexShrink: 0,
-          backgroundColor: "#f8f9fb",
-          borderRight: "1px solid #e2e6ea",
-          padding: "12px 10px",
-          overflowY: "auto",
-        }}>
-          <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.key}
-                to={`/courses/${courseId}/${item.key}`}
-                style={({ isActive }) => ({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "9px 12px",
-                  borderRadius: "7px",
-                  textDecoration: "none",
-                  fontSize: "13.5px",
-                  fontWeight: isActive ? "600" : "500",
-                  color: isActive ? "#2d5be3" : "#4b5563",
-                  backgroundColor: isActive ? "#eef2fc" : "transparent",
-                  transition: "all 0.15s ease",
-                })}
-                onMouseEnter={e => { if (!e.currentTarget.style.backgroundColor.includes("eef2fc")) e.currentTarget.style.backgroundColor = "#eef0f3"; }}
-                onMouseLeave={e => { if (!window.location.pathname.includes(item.key)) e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                {item.icon(window.location.pathname.includes(item.key))}
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
+        {/* Sidebar — hidden while on live route so the fixed overlay looks clean */}
+        {!isOnLiveRoute && (
+          <aside style={{ width: "230px", flexShrink: 0, backgroundColor: "#f8f9fb", borderRight: "1px solid #e2e6ea", padding: "12px 10px", overflowY: "auto" }}>
+            <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.key}
+                  to={`/courses/${courseId}/${item.key}`}
+                  style={({ isActive }) => ({
+                    display: "flex", alignItems: "center", gap: "10px", padding: "9px 12px",
+                    borderRadius: "7px", textDecoration: "none", fontSize: "13.5px",
+                    fontWeight: isActive ? "600" : "500",
+                    color: isActive ? "#2d5be3" : "#4b5563",
+                    backgroundColor: isActive ? "#eef2fc" : "transparent",
+                    transition: "all 0.15s ease",
+                  })}
+                >
+                  {item.icon(window.location.pathname.includes(item.key))}
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </aside>
+        )}
 
         {/* Main content */}
         <main style={{
           flex: 1,
-          overflowY: "auto",
-          padding: "28px 32px",
-          backgroundColor: "#f4f6f8",
+          overflowY: isOnLiveRoute ? "hidden" : "auto",
+          padding: isOnLiveRoute ? "0" : "28px 32px",
+          backgroundColor: isOnLiveRoute ? "transparent" : "#f4f6f8",
+          position: "relative",
         }}>
           <Routes>
             <Route index element={<Announcements />} />
@@ -219,6 +241,7 @@ function CourseLayoutInner() {
             <Route path="assignments/:announcementId" element={<AssignmentDetail />} />
             <Route path="people" element={<People />} />
             <Route path="messages" element={<Messages />} />
+            <Route path="live/:roomId" element={<LiveClass />} />
           </Routes>
         </main>
       </div>

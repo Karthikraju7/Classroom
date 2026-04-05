@@ -19,4 +19,6 @@ public interface CourseService {
     List<CourseResponse> getCoursesWhereUserIsStudent(User user);
 
     CourseResponse getCourseByIdForUser(Long courseId, User user);
+
+    Course getCourseEntityById(Long courseId);
 }

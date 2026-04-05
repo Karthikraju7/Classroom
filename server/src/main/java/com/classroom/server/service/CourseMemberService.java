@@ -2,6 +2,7 @@ package com.classroom.server.service;
 
 import com.classroom.server.dto.courseMember.CourseMemberResponse;
 import com.classroom.server.entity.Course;
+import com.classroom.server.entity.CourseRole;
 import com.classroom.server.repository.CourseMemberRepository;
 import com.classroom.server.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,10 @@ public class CourseMemberService {
                         cm.getRole().name()
                 ))
                 .toList();
+    }
+
+    public boolean isTeacher(Long courseId, Long userId) {
+        return courseMemberRepository
+                .existsByCourse_IdAndUser_IdAndRole(courseId, userId, CourseRole.TEACHER);
     }
 }

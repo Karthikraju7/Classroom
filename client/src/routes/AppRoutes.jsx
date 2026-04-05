@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../pages/Home/Home";
 import CourseLayout from "../pages/Course/CourseLayout";
+import LiveClass from "../pages/Course/LiveClass";
 import Auth from "../pages/Auth/Auth";
 import AnnouncementDetail from "../pages/Course/AnnouncementDetail";
 import { useAuth } from "../context/AuthContext";

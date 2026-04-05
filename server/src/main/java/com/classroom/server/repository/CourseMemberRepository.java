@@ -28,4 +28,6 @@
                 List<Long> userIds,
                 CourseRole role
         );
+
+        boolean existsByCourse_IdAndUser_IdAndRole(Long courseId, Long userId, CourseRole role);
     }
