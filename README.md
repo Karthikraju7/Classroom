@@ -31,7 +31,7 @@
 
 ---
 
-### 🎥 Live Classroom (WebRTC) ⭐ NEW
+### 🎥 Live Classroom (WebRTC) 
 - Real-time video sessions using **WebRTC**
 - WebSocket signaling via **STOMP + SockJS**
 - Teacher-controlled live sessions
