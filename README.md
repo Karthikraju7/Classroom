@@ -1,22 +1,22 @@
-## 🚀 Features
+## Features
 
-### 🔐 Per-Course Role Isolation
+### Per-Course Role Isolation
 - A single user can act as:
-  - 👨‍🏫 Teacher in one course
-  - 🎓 Student in another
+  -  Teacher in one course
+  -  Student in another
 - All permissions enforced at backend level
 - Prevents cross-course and cross-role access
 
 ---
 
-### 📢 Announcement-Centric Design
+### Announcement-Centric Design
 - Announcements act as the **core entity**
 - Assignments and attachments are derived as **filtered views**
 - Scalable architecture for future features
 
 ---
 
-### 📝 Assignment Workflow
+### Assignment Workflow
 - Assignment creation with due dates
 - One-to-one student submissions
 - Teacher grading & feedback
@@ -24,27 +24,27 @@
 
 ---
 
-### 💬 Private Messaging System
+### Private Messaging System
 - Role-based messaging system
 - Teacher ↔ Students communication
 - Secure and restricted access
 
 ---
 
-### 🎥 Live Classroom (WebRTC) 
+### Live Classroom (WebRTC) 
 - Real-time video sessions using **WebRTC**
 - WebSocket signaling via **STOMP + SockJS**
 - Teacher-controlled live sessions
 - Students join via room-based sessions
 
-#### 🔁 Flow:
+#### Flow:
 1. Student joins session
 2. Teacher sends WebRTC offer
 3. Student responds with answer
 4. ICE candidates exchanged
 5. Peer-to-peer video connection established
 
-#### ⚙️ Features:
+#### Features:
 - Live video/audio streaming
 - Participant tracking
 - Teacher-only **End Session**
@@ -55,13 +55,13 @@
 
 ---
 
-### 🔑 Secure Authentication
+### Secure Authentication
 - JWT-based authentication
 - Spring Security protected APIs
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React, Tailwind CSS  
 - **Backend:** Spring Boot  
@@ -72,7 +72,7 @@
 
 ---
 
-## 🧠 System Design Highlights
+## System Design Highlights
 
 - Clean separation of concerns
 - Backend-driven authorization
@@ -82,7 +82,7 @@
 
 ---
 
-## 📦 Installation
+## Installation
 
 1. **Clone the repository**
 
