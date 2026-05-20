@@ -20,11 +20,21 @@ function getInitials(id) {
   );
 }
 
-// ── useLocalMedia ──────────────────────────────────────────────────────────────
+// useLocalMedia
 function useLocalMedia() {
   const streamRef = useRef(null);
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [isCamOn, setIsCamOn] = useState(true);
+  const [localStream, setLocalStream] = useState(null);
+
+  // Read saved preferences FIRST, before any state initialization
+  const [isMicOn, setIsMicOn] = useState(() => {
+    const saved = localStorage.getItem("micOn");
+    return saved === null ? true : saved === "true";
+  });
+  const [isCamOn, setIsCamOn] = useState(() => {
+    const saved = localStorage.getItem("camOn");
+    return saved === null ? true : saved === "true";
+  });
+
   const [mediaError, setMediaError] = useState(null);
 
   useEffect(() => {
@@ -34,7 +44,14 @@ function useLocalMedia() {
         try {
           const stream = await navigator.mediaDevices.getUserMedia(c);
           if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+          
+          const audioTrack = stream.getAudioTracks()[0];
+          const videoTrack = stream.getVideoTracks()[0];
+          if (audioTrack) audioTrack.enabled = isMicOn;
+          if (videoTrack) videoTrack.enabled = isCamOn;
+
           streamRef.current = stream;
+          setLocalStream(stream);
           return;
         } catch { /* try next */ }
       }
@@ -44,14 +61,18 @@ function useLocalMedia() {
       cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
+      setLocalStream(null);
     };
-  }, []);
+  }, []); 
+  // intentional empty deps - we only want this to run once on mount
 
+  // Save to localStorage every time they toggle
   const toggleMic = useCallback(() => {
     const t = streamRef.current?.getAudioTracks()[0];
     if (!t) return;
     t.enabled = !t.enabled;
     setIsMicOn(t.enabled);
+    localStorage.setItem("micOn", t.enabled); // ← save
   }, []);
 
   const toggleCam = useCallback(() => {
@@ -59,20 +80,24 @@ function useLocalMedia() {
     if (!t) return;
     t.enabled = !t.enabled;
     setIsCamOn(t.enabled);
+    localStorage.setItem("camOn", t.enabled); // ← save
   }, []);
 
-  return { streamRef, isMicOn, isCamOn, mediaError, toggleMic, toggleCam };
+  return { streamRef, localStream, isMicOn, isCamOn, mediaError, toggleMic, toggleCam };
 }
 
-// ── VideoTile ──────────────────────────────────────────────────────────────────
-function VideoTile({ stream, label, isMuted = false, isLocal = false, isMicOn = true, large = false }) {
+//  VideoTile 
+function VideoTile({ stream, label, isMuted = false, isLocal = false, isMicOn = true, isCamOn = true, large = false }) {
   const videoRef = useRef(null);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.srcObject = stream ?? null;
-  }, [stream]);
+  }, [stream, isCamOn]);
 
-  const hasLive = stream?.getVideoTracks().some((t) => t.enabled && t.readyState === "live");
+  // const hasLive = stream?.getVideoTracks().some((t) => t.enabled && t.readyState === "live");
+  const hasLive = isLocal
+    ? (isCamOn && stream?.getVideoTracks().some((t) => t.readyState === "live"))
+    : stream?.getVideoTracks().some((t) => t.enabled && t.readyState === "live");
   const initials = getInitials(label);
 
   return (
@@ -103,7 +128,7 @@ function VideoTile({ stream, label, isMuted = false, isLocal = false, isMicOn = 
   );
 }
 
-// ── CtrlBtn ────────────────────────────────────────────────────────────────────
+//  CtrlBtn 
 function CtrlBtn({ onClick, off = false, danger = false, label, children, disabled = false }) {
   const base = "flex flex-col items-center gap-1 px-4 py-2.5 rounded-xl border text-xs font-medium select-none transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-w-[68px]";
   const variant = danger
@@ -119,7 +144,7 @@ function CtrlBtn({ onClick, off = false, danger = false, label, children, disabl
   );
 }
 
-// ── ConfirmModal ───────────────────────────────────────────────────────────────
+//  ConfirmModal 
 function ConfirmModal({ onConfirm, onCancel, loading }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -157,7 +182,7 @@ function ConfirmModal({ onConfirm, onCancel, loading }) {
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
+//  Main Component 
 export default function LiveClass() {
   const { roomId, courseId } = useParams();
   const { role } = useCourse();
@@ -167,7 +192,7 @@ export default function LiveClass() {
   const isTeacher = role === "TEACHER";
   const myId = String(user?.id ?? user?.email ?? "anonymous");
 
-  const { streamRef, isMicOn, isCamOn, mediaError, toggleMic, toggleCam } = useLocalMedia();
+  const { streamRef, localStream, isMicOn, isCamOn, mediaError, toggleMic, toggleCam } = useLocalMedia();
 
   const peersRef = useRef(new Map());
   const [remoteStreams, setRemoteStreams] = useState(new Map());
@@ -183,7 +208,7 @@ export default function LiveClass() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [endingSession, setEndingSession] = useState(false);
 
-  // ── peer helpers ─────────────────────────────────────────────────────────────
+  //  peer helpers 
   const flushIce = useCallback(async (peerId, pc) => {
     for (const c of iceQueuesRef.current.get(peerId) ?? []) {
       try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore */ }
@@ -221,7 +246,7 @@ export default function LiveClass() {
     return pc;
   }, [roomId, myId, streamRef, removePeer]);
 
-  // ── cleanup helper (shared by leave + end) ────────────────────────────────────
+  //cleanup helper (shared by leave + end) 
   const cleanupSession = useCallback(() => {
     mountedRef.current = false;
     peersRef.current.forEach(({ pc }) => pc.close());
@@ -234,7 +259,7 @@ export default function LiveClass() {
     }
   }, [streamRef]);
 
-  // ── STOMP + signaling ─────────────────────────────────────────────────────────
+  //  STOMP + signaling 
   useEffect(() => {
     if (!user || !roomId) return;
     mountedRef.current = true;
@@ -322,15 +347,15 @@ export default function LiveClass() {
         isConnectedRef.current = false;
       }
     };
-  }, [user, roomId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, roomId]); 
 
-  // ── Leave (student / teacher leaving without ending) ──────────────────────────
+  //  Leave (student / teacher leaving without ending)
   const handleLeave = useCallback(() => {
     cleanupSession();
     navigate(`/courses/${courseId}/announcements`, { replace: true });
   }, [cleanupSession, navigate, courseId]);
 
-  // ── End Session (teacher only) ────────────────────────────────────────────────
+  //  End Session (teacher only) 
   const handleEndSession = useCallback(async () => {
     setEndingSession(true);
     try {
@@ -346,8 +371,6 @@ export default function LiveClass() {
     }
   }, [roomId, myId, cleanupSession, navigate, courseId]);
 
-  // ── Build tile list ───────────────────────────────────────────────────────────
-  const localStream = streamRef.current ?? null;
   const remoteEntries = [...remoteStreams.entries()];
   const hasRemote = remoteEntries.length > 0;
 
@@ -363,7 +386,7 @@ export default function LiveClass() {
     // fixed inset-0 so it escapes CourseLayout's padded <main>
     <div className="fixed inset-0 z-40 flex flex-col bg-gray-950 text-gray-100 overflow-hidden">
 
-      {/* ── HEADER ────────────────────────────────────────────────────────── */}
+      {/* HEADER */}
       <header className="flex items-center justify-between px-5 h-14 bg-gray-900 border-b border-gray-800 shrink-0 z-10">
         <div className="flex items-center gap-3">
           <span className="text-blue-400 text-lg select-none">◈</span>
@@ -391,10 +414,10 @@ export default function LiveClass() {
         </div>
       </header>
 
-      {/* ── BODY ──────────────────────────────────────────────────────────── */}
+      {/* BODY */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ── VIDEO AREA ────────────────────────────────────────────────── */}
+        {/*  VIDEO AREA */}
         <main className="relative flex-1 overflow-hidden bg-gray-950 p-3">
           {mediaError && (
             <div className="mb-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500 text-red-400 text-sm text-center">
@@ -402,11 +425,10 @@ export default function LiveClass() {
             </div>
           )}
 
-          {/* ── Layout: 1 remote → large main + pip self. Multiple → grid ── */}
           {!hasRemote ? (
-            // Only local — centered full area
+            // Only local - centered full area
             <div className="w-full h-full">
-              <VideoTile stream={localStream} label={myId} isMuted isLocal isMicOn={isMicOn} large />
+              <VideoTile stream={localStream} label={myId} isMuted isLocal isMicOn={isMicOn} isCamOn={isCamOn} large />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
                   <p className="text-gray-500 text-sm mt-40">Waiting for others to join…</p>
@@ -422,7 +444,7 @@ export default function LiveClass() {
               </div>
               {/* PiP — self */}
               <div className="absolute bottom-4 right-4 w-44 h-32 rounded-xl overflow-hidden shadow-2xl border border-white/20 z-10">
-                <VideoTile stream={localStream} label={myId} isMuted isLocal isMicOn={isMicOn} />
+                <VideoTile stream={localStream} label={myId} isMuted isLocal isMicOn={isMicOn} isCamOn={isCamOn}/>
               </div>
             </div>
           ) : (
@@ -438,13 +460,13 @@ export default function LiveClass() {
               </div>
               {/* PiP self */}
               <div className="absolute bottom-4 right-4 w-44 h-32 rounded-xl overflow-hidden shadow-2xl border border-white/20 z-10">
-                <VideoTile stream={localStream} label={myId} isMuted isLocal isMicOn={isMicOn} />
+                <VideoTile stream={localStream} label={myId} isMuted isLocal isMicOn={isMicOn} isCamOn={isCamOn}/>
               </div>
             </div>
           )}
         </main>
 
-        {/* ── PARTICIPANTS SIDEBAR ───────────────────────────────────────── */}
+        {/*  PARTICIPANTS SIDEBAR  */}
         {sidebarOpen && (
           <aside className="w-64 shrink-0 bg-gray-900 border-l border-gray-800 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-800">
@@ -494,7 +516,7 @@ export default function LiveClass() {
         )}
       </div>
 
-      {/* ── CONTROL BAR ───────────────────────────────────────────────────── */}
+      {/*  CONTROL BAR  */}
       <footer className="flex items-center justify-center gap-3 px-5 py-3.5 bg-gray-900 border-t border-gray-800 shrink-0">
         <CtrlBtn onClick={toggleMic} off={!isMicOn} label={isMicOn ? "Mute" : "Unmute"}>
           {isMicOn ? <MicOnIcon /> : <MicOffIcon />}
@@ -525,7 +547,7 @@ export default function LiveClass() {
         )}
       </footer>
 
-      {/* ── END SESSION CONFIRM MODAL ──────────────────────────────────────── */}
+      {/*  END SESSION CONFIRM MODAL  */}
       {showEndConfirm && (
         <ConfirmModal
           onConfirm={handleEndSession}
@@ -537,7 +559,7 @@ export default function LiveClass() {
   );
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
+// Icons 
 function MicOnIcon({ size = 18 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>;
 }

@@ -25,7 +25,7 @@ public class LiveSessionService {
     // START SESSION
     public LiveSession startSession(Long courseId, Long userId) {
 
-        // ✅ check teacher FIRST
+        // check teacher FIRST
         boolean isTeacher = courseMemberService.isTeacher(courseId, userId);
         if (!isTeacher) {
             throw new RuntimeException("Only teacher can start session");
@@ -65,12 +65,11 @@ public class LiveSessionService {
             throw new RuntimeException("Only teacher can end session");
         }
 
-        // ✅ FIX: actually end session
+        // actually end session
         session.setStatus(LiveSession.Status.ENDED);
         liveSessionRepository.save(session);
     }
 
-    // MAPPING FUNCTION (ENTITY → DTO)
     public LiveSessionResponse mapToResponse(LiveSession session) {
         return new LiveSessionResponse(
                 session.getId(),
