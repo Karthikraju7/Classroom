@@ -7,7 +7,7 @@ function AttachmentItem({ attachment }) {
 
   function handleOpen() {
     window.open(
-      `http://localhost:8080/attachments/${attachment.id}/view?userId=${user.id}`,
+      `import.meta.env.VITE_API_BASE_URL/attachments/${attachment.id}/view?userId=${user.id}`,
       "_blank"
     );
   }
